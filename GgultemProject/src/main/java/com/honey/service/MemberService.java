@@ -1,0 +1,19 @@
+package com.honey.service;
+
+import com.honey.dto.MemberDTO;
+import com.honey.dto.PageRequestDTO;
+import com.honey.dto.PageResponseDTO;
+
+public interface MemberService {
+
+	public MemberDTO get(Long no);
+
+	public Long register(MemberDTO memberDTO);
+
+	public PageResponseDTO<MemberDTO> list(PageRequestDTO pageRequestDTO);
+
+	public void modify(MemberDTO memberDTO);
+
+	public void remove(Long no);
+
+}
