@@ -2,6 +2,8 @@ package com.honey.domain;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Set;
 
 import com.honey.common.BaseTimeEntity;
@@ -35,7 +37,7 @@ import lombok.ToString;
 		initialValue = 1,
 		allocationSize = 1)
 @Getter
-@ToString
+@ToString(exclude = "thumbnailList")
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -44,10 +46,17 @@ public class Member extends BaseTimeEntity {
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "MEMBER_SEQ_GEN")
 	private Long no;
 	
+	@Column(nullable = false)
 	private String id;
+	
 	private String pw;
+	
+	@Column(nullable = false)
 	private String rrn;
+	
+	@Column(nullable = false)
 	private String nickName;
+	
 	private String location;
 	private String phone;
 	private String email;
@@ -61,6 +70,10 @@ public class Member extends BaseTimeEntity {
     @Column(name = "auth") // 권한 내용이 들어갈 컬럼명
     @Builder.Default
     private Set<String> authSet = new HashSet<>();
+    
+    @ElementCollection 
+	@Builder.Default 
+	private List<MemberThumbnail> thumbnailList = new ArrayList<>(); 
 
     public void addRole(String role) {
         authSet.add(role);
@@ -109,4 +122,19 @@ public class Member extends BaseTimeEntity {
     public void setEnabled(int enabled) {
     	this.enabled = enabled;
     }
+    
+    public void addImage(MemberThumbnail image) {
+		image.setOrd(this.thumbnailList.size());
+		thumbnailList.add(image);
+	}
+
+	public void addImageString(String fileName) {
+		MemberThumbnail memberThumbnail = MemberThumbnail.builder().fileName(fileName).build();
+		addImage(memberThumbnail);
+	}
+
+	public void clearList() {
+		this.thumbnailList.clear();
+	}
+	
 }

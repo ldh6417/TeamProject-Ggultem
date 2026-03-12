@@ -16,4 +16,6 @@ public interface MemberService {
 
 	public void remove(Long no);
 
+	public void updateToThumbnail(MemberDTO memberDTO);
+
 }

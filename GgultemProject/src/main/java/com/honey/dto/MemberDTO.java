@@ -1,7 +1,10 @@
 package com.honey.dto;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList;
+
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -39,5 +42,11 @@ public class MemberDTO {
 	
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private LocalDateTime stopEndDate;
+	
+	@Builder.Default
+	private List<MultipartFile> files = new ArrayList<>();
+	
+	@Builder.Default
+	private List<String> uploadFileNames = new ArrayList<>();
 	
 }

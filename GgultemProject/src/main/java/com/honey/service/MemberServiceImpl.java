@@ -16,6 +16,7 @@ import com.honey.dto.MemberDTO;
 import com.honey.dto.PageRequestDTO;
 import com.honey.dto.PageResponseDTO;
 import com.honey.repository.MemberRepository;
+import com.honey.util.CustomFileUtil;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -29,13 +30,25 @@ public class MemberServiceImpl implements MemberService {
 	
 	private final ModelMapper modelMapper;
 	private final MemberRepository memberRepository;
+	private final CustomFileUtil fileUtil;
 	
 	@Override
 	public MemberDTO get(Long no) {
 		java.util.Optional<Member> result = memberRepository.findById(no);
 		Member member = result.orElseThrow();
-
+		
 		MemberDTO memberDTO = modelMapper.map(member, MemberDTO.class);
+		
+		List<String> fileNameList = member.getThumbnailList().stream()
+	            .map(thumbnail -> thumbnail.getFileName())
+	            .collect(Collectors.toList());
+
+	    if (fileNameList != null && !fileNameList.isEmpty()) {
+	    	memberDTO.setUploadFileNames(fileNameList);
+	    } else {
+	    	memberDTO.setUploadFileNames(List.of("default.jpg"));
+	    }
+		
 		return memberDTO;
 	}
 
@@ -62,7 +75,6 @@ public class MemberServiceImpl implements MemberService {
 		member.changeNickName(memberDTO.getNickName());
 		member.setEnabled(memberDTO.getEnabled());
 		
-		// 중요: enabled 값이 변경되었다면 changeStatus를 호출하도록 수정
 	    if (member.getEnabled() != memberDTO.getEnabled()) {
 	        member.changeStatus(memberDTO.getEnabled());
 	    }
@@ -84,18 +96,39 @@ public class MemberServiceImpl implements MemberService {
 	public PageResponseDTO<MemberDTO> list(PageRequestDTO pageRequestDTO) {
 		Pageable pageable = PageRequest.of(pageRequestDTO.getPage() - 1, // 1 페이지가 0 이므로 주의
 				pageRequestDTO.getSize(), Sort.by("no").descending());
-		//1페이지에 해당되는 레코드 10개를 가져온다.
 		Page<Member> result = memberRepository.findAll(pageable);
-		//1페이지에 해당되는 10개 레코드를 가져온다.
 		List<MemberDTO> dtoList = result.getContent().stream().map(member -> modelMapper.map(member, MemberDTO.class))
 				.collect(Collectors.toList());
-		//전체 레코드수를 구함
 		long totalCount = result.getTotalElements();
 		
 		PageResponseDTO<MemberDTO> responseDTO = PageResponseDTO.<MemberDTO>withAll().dtoList(dtoList)
 				.pageRequestDTO(pageRequestDTO).totalCount(totalCount).build();
 		
 		return responseDTO;
+	}
+
+	@Override
+	public void updateToThumbnail(MemberDTO memberDTO) {
+	    Member member = memberRepository.findById(memberDTO.getNo()).orElseThrow();
+
+	    List<String> oldFileNames = member.getThumbnailList().stream()
+	            .map(thumbnail -> thumbnail.getFileName())
+	            .collect(Collectors.toList());
+	    
+	    if (oldFileNames != null && !oldFileNames.isEmpty()) {
+	        fileUtil.deleteFiles(oldFileNames);
+	    }
+
+	    member.clearList();
+
+	    List<String> newFileNames = memberDTO.getUploadFileNames();
+	    if (newFileNames != null && !newFileNames.isEmpty()) {
+	        newFileNames.forEach(fileName -> {
+	            member.addImageString(fileName);
+	        });
+	    }
+
+	    memberRepository.save(member);
 	}
 
 }
