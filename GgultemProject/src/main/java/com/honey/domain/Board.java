@@ -1,8 +1,14 @@
 package com.honey.domain;
 
+import java.time.LocalDateTime;
+
 import com.honey.common.BaseTimeEntity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
@@ -15,21 +21,58 @@ import lombok.ToString;
 
 @Entity
 @Table(name = "board")
-@SequenceGenerator(name = "BOARD_SEQ_GEN", sequenceName = "BOARD_SEQ", initialValue = 1, allocationSize = 1)
+@SequenceGenerator(name = "BOARD_SEQ_GEN", sequenceName = "BOARD_SEQ1", initialValue = 1, allocationSize = 1)
 @Getter
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class Board extends BaseTimeEntity {
-
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "BOARD_SEQ_GEN")
+	@Column(name = "BOARD_NO")
 	private int boardNo;
 
 	@ManyToOne
 	@JoinColumn(name = "MEMBER_NO") // 실제 DB 테이블의 FK 컬럼명을 지정
 	private Member member;
-	
+
 	private String title;
 	private String writer;
+	private String content;
+	private int viewCount;
+	private Integer enabled; // 1: 활성화 / 0:삭제
+	
+	private LocalDateTime dtdDate;
+
+	public void changeTitle(String title) {
+		this.title = title;
+	}
+
+	public void changeWriter(String writer) {
+		this.writer = writer;
+	}
+
+	public void changeViewCount(int viewCount) {
+		this.viewCount = viewCount;
+	}
+
+	public void changeMember(Member member) {
+		this.member = member;
+
+	}
+	
+	public void changeEnabled(int enabled) {
+		switch (enabled) {
+		case 1:
+			this.dtdDate = null;
+			break;
+		case 0:
+			this.enabled = enabled;
+			this.dtdDate = LocalDateTime.now();
+			break;
+		}
+		
+	}
 
 }
