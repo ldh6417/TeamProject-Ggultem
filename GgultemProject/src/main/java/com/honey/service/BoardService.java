@@ -1,13 +1,11 @@
 package com.honey.service;
 
-import org.springframework.transaction.annotation.Transactional;
-
 import com.honey.dto.BoardDTO;
 import com.honey.dto.PageRequestDTO;
 import com.honey.dto.PageResponseDTO;
 import com.honey.dto.SearchDTO;
 
-@Transactional
+
 public interface BoardService {
 
 	// 게시글 등록
