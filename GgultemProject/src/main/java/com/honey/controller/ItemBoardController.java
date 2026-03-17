@@ -69,7 +69,7 @@ public class ItemBoardController {
 		
 		List<String> currentUploadFileNames = null;
 		
-		if(files != null && !files.get(0).isEmpty()) {
+		if(files != null && files.size() > 0 && !files.get(0).isEmpty()) {
 			currentUploadFileNames = fileUtil.saveFiles(files);
 		}
 		

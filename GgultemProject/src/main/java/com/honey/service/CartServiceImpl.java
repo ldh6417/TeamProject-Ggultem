@@ -42,7 +42,6 @@ public class CartServiceImpl implements CartService {
 	            .orElseThrow(() -> new RuntimeException("해당 장바구니 아이템이 없습니다."));
 		
 		ItemBoard itemBoard = cart.getItemBoard();
-		Long itemId = itemBoard.getId();
 		
 		return CartDTO.builder().id(cart.getId()).itemId(itemBoard.getId())
 		.member(cart.getMember())
@@ -55,7 +54,7 @@ public class CartServiceImpl implements CartService {
 		ItemBoard itemBoard = itemBoardRepository.findById(cartDTO.getItemId())
 				.orElseThrow(()-> new RuntimeException("등록된 상품이 없습니다."));
 		
-		Member member = memberRepository.findById(cartDTO.getMember().getNo())
+		Member member = memberRepository.findById(cartDTO.getEmail())
 				.orElseThrow(()->new RuntimeException("회원이 없습니다."));
 		
 		Cart cart = Cart.builder()
@@ -68,7 +67,7 @@ public class CartServiceImpl implements CartService {
 	}
 
 	@Override
-	public PageResponseDTO<CartDTO> list(SearchDTO searchDTO, Long memberNo) {
+	public PageResponseDTO<CartDTO> list(SearchDTO searchDTO, String memberEmail) {
 		Pageable pageable = PageRequest.of(searchDTO.getPage() -1, searchDTO.getSize(),
 				Sort.by("id").descending());
 		Page<Cart> result = null;
@@ -77,9 +76,9 @@ public class CartServiceImpl implements CartService {
 			result = cartRepository.searchByCondition(
 					searchDTO.getSearchType(),
 					searchDTO.getKeyword(),
-					pageable, memberNo);
+					pageable, memberEmail);
 		}else {
-			result = cartRepository.findAll(pageable);
+			result = cartRepository.searchByCondition("","",pageable,memberEmail);
 		}
 		
 		List<CartDTO> dtoList = result.getContent().stream()

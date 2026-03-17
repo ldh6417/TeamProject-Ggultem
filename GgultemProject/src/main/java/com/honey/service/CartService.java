@@ -10,7 +10,7 @@ public interface CartService {
 
 	public Long register(CartDTO cartDTO);
 
-	public PageResponseDTO<CartDTO> list(SearchDTO searchDTO, Long memberNo);
+	public PageResponseDTO<CartDTO> list(SearchDTO searchDTO, String memberEmail);
 
 	public void remove(Long id);
 

@@ -36,7 +36,7 @@ public class ItemBoard extends BaseTimeEntity {
 	private Long id;
 
 	@ManyToOne
-	@JoinColumn(name = "MEMBER_NO") // 실제 DB 테이블의 FK 컬럼명을 지정
+	@JoinColumn(name = "MEMBER_EMAIL") // 실제 DB 테이블의 FK 컬럼명을 지정
 	private Member member;
 
 	@Column(nullable = false)
@@ -103,6 +103,10 @@ public class ItemBoard extends BaseTimeEntity {
 	
 	public void chanceViewCount(int viewCount) {
 		this.viewCount = viewCount;
+	}
+	
+	public void changePictureUrl(String pictureUrl) {
+		this.pictureUrl = pictureUrl;
 	}
 
 	public void addImage(ItemBoardImage image) {

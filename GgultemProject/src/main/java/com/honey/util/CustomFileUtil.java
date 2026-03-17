@@ -53,7 +53,7 @@ public class CustomFileUtil {
 			try {
 				Files.copy(multipartFile.getInputStream(), savePath);
 				String contentType = multipartFile.getContentType();
-				if (contentType != null && contentType.startsWith("image")) { 
+				if (contentType != null && contentType.startsWith("image")){ 
 					Path thumbnailPath = Paths.get(uploadPath,"s_"+savedName);
 					Thumbnails.of(savePath.toFile()).size(250,250).toFile(thumbnailPath.toFile()); 
 				} 
