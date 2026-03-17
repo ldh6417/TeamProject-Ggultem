@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.honey.domain.MemberRole;
 import com.honey.dto.MemberDTO;
 import com.honey.dto.PageResponseDTO;
 import com.honey.dto.SearchDTO;
@@ -28,15 +29,16 @@ public class MemberController {
 	
 	private final MemberService service;
 	
-	@GetMapping("/{no}")
-	public MemberDTO getMember(@PathVariable(name = "no") Long no) {
-		return service.get(no);
+	@GetMapping("/{email}")
+	public MemberDTO getMember(@PathVariable(name = "email") String email) {
+		return service.get(email);
 	}
 	
 	@PostMapping("/")
-	public Map<String, Long> register(@RequestBody MemberDTO memberDTO) {
-		Long no = service.register(memberDTO);
-		return Map.of("NO", no);
+	public Map<String, String> register(MemberDTO memberDTO) {
+		log.info("여기입니다 =-==================="+memberDTO.toString());
+		String email = service.register(memberDTO);
+		return Map.of("EAMIL", email);
 	}
 	
 	@GetMapping("/list")
@@ -44,16 +46,17 @@ public class MemberController {
 		return service.list(searchDTO);
 	}
 	
-	@PutMapping("/{no}")
-	public Map<String, String> modify(@PathVariable(name = "no") Long no, @RequestBody MemberDTO memberDTO) {
-		memberDTO.setNo(no);
+	@PutMapping("/{email}")
+	public Map<String, String> modify(@PathVariable(name = "email") String email, MemberDTO memberDTO) {
+		log.info("수정 요청 데이터: " + memberDTO);
+		memberDTO.setEmail(email);
 		service.modify(memberDTO);
 		return Map.of("RESULT", "SUCCESS");
 	}
 
-	@PutMapping("/remove/{no}")
-	public Map<String, String> remove(@PathVariable(name = "no") Long no) {
-		service.remove(no);
+	@PutMapping("/remove/{email}")
+	public Map<String, String> remove(@PathVariable(name = "email") String email) {
+		service.remove(email);
 		return Map.of("RESULT", "SUCCESS");
 	}
 	

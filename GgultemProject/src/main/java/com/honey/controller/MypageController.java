@@ -32,27 +32,27 @@ public class MypageController {
 	private final MemberService service;
 	private final CustomFileUtil fileUtil;
 	
-    @GetMapping("/{no}")
-    public MemberDTO getMyInfo(@PathVariable(name = "no") Long no) {
-        return service.get(no);
+    @GetMapping("/{email}")
+    public MemberDTO getMyInfo(@PathVariable(name = "email") String email) {
+        return service.get(email);
     }
     
-    @PutMapping("/{no}")
-    public Map<String, String> modify(@PathVariable(name = "no") Long no, MemberDTO memberDTO) {
+    @PutMapping("/{email}")
+    public Map<String, String> modify(@PathVariable(name = "email") String email, MemberDTO memberDTO) {
         service.modify(memberDTO);
     	return Map.of("RESULT", "SUCCESS");
     }
     
-    @PutMapping("remove/{no}")
-    public Map<String, String> remove(@PathVariable(name = "no") Long no) {
-        service.remove(no);
+    @PutMapping("remove/{email}")
+    public Map<String, String> remove(@PathVariable(name = "email") String email) {
+        service.remove(email);
         return Map.of("RESULT", "SUCCESS");
     }
 
-    @PutMapping("/thumbnail/{no}")
-    public Map<String, String> updateMyThumbnail(@PathVariable(name="no") Long no, MemberDTO memberDTO) {
-    	memberDTO.setNo(no);
-    	MemberDTO oldMemberDTO = service.get(no);
+    @PutMapping("/thumbnail/{email}")
+    public Map<String, String> updateMyThumbnail(@PathVariable(name="email") String email, MemberDTO memberDTO) {
+    	memberDTO.setEmail(email);
+    	MemberDTO oldMemberDTO = service.get(email);
     	
     	List<String> oldFileNames = oldMemberDTO.getUploadFileNames();
         

@@ -10,9 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import com.honey.domain.BusinessMember;
 import com.honey.domain.SearchLog;
-import com.honey.dto.BusinessMemberDTO;
 import com.honey.dto.PageResponseDTO;
 import com.honey.dto.SearchDTO;
 import com.honey.dto.SearchLogDTO;

@@ -9,9 +9,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.honey.domain.Member;
+import com.honey.domain.MemberRole;
 import com.honey.dto.MemberDTO;
 import com.honey.dto.PageResponseDTO;
 import com.honey.dto.SearchDTO;
@@ -32,15 +34,16 @@ public class MemberServiceImpl implements MemberService {
 	private final MemberRepository memberRepository;
 	private final SearchLogService searchLogSearvice;
 	private final CustomFileUtil fileUtil;
+	private final PasswordEncoder passwordEncoder; // 주입 필요
 
 	@Override
-	public MemberDTO get(Long no) {
-		java.util.Optional<Member> result = memberRepository.findById(no);
-		Member member = result.orElseThrow();
+	public MemberDTO get(String email) {
+		Member member = memberRepository.findById(email).orElseThrow();
 
-		MemberDTO memberDTO = modelMapper.map(member, MemberDTO.class);
-		
-		memberDTO.setAuth(member.getAuthSet());
+		MemberDTO memberDTO =  
+			    new MemberDTO(member.getEmail(), member.getPw(), member.getNickname(),  
+			      member.isSocial(), 
+			member.getMemberRoleSet().stream().map(memberRole -> memberRole.name()).collect(Collectors.toSet()),member.getRegDate());
 
 		List<String> fileNameList = member.getThumbnailList().stream().map(thumbnail -> thumbnail.getFileName())
 				.collect(Collectors.toList());
@@ -55,26 +58,34 @@ public class MemberServiceImpl implements MemberService {
 	}
 
 	@Override
-	public Long register(MemberDTO memberDTO) {
+	public String register(MemberDTO memberDTO) {
 		Member member = modelMapper.map(memberDTO, Member.class);
-
+		
+		member.changePw(passwordEncoder.encode(memberDTO.getPw())); // 암호화
 		member.changeStatus(1);
-		member.addRole("ROLE_MEMBER");
+		member.addRole(MemberRole.MEMBER);
 
 		Member savedMember = memberRepository.save(member);
 
-		return savedMember.getNo();
+		return savedMember.getEmail();
 	}
 
 	@Override
 	public void modify(MemberDTO memberDTO) {
-		Optional<Member> result = memberRepository.findById(memberDTO.getNo());
-		Member member = result.orElseThrow();
+		Member member = memberRepository.findById(memberDTO.getEmail()).orElseThrow();
 
-		member.changePw(memberDTO.getPw());
+		// 1. 비밀번호: 넘어온 값이 있을 때만 수정 (암호화는 필수!)
+	    if (memberDTO.getPw() != null && !memberDTO.getPw().isEmpty()) {
+	        // 비밀번호를 수정할 경우 반드시 암호화해서 넣어야 로그인이 됩니다.
+	        member.changePw(passwordEncoder.encode(memberDTO.getPw())); 
+	        log.info("비밀번호 변경됨");
+	    } else {
+	        log.info("비밀번호 변경 안 함 (기존 유지)");
+	    }
 		member.changePhone(memberDTO.getPhone());
-		member.changeEmail(memberDTO.getEmail());
-		member.changeNickName(memberDTO.getNickName());
+		member.changeNickName(memberDTO.getNickname());
+		
+		log.info("수정된 데이터 =" + member.toString());
 		
 	    if (memberDTO.getEnabled() != null) {
 	        if (!member.getEnabled().equals(memberDTO.getEnabled())) {
@@ -86,9 +97,8 @@ public class MemberServiceImpl implements MemberService {
 	}
 
 	@Override
-	public void remove(Long no) {
-		Optional<Member> result = memberRepository.findById(no);
-		Member member = result.orElseThrow();
+	public void remove(String email) {
+		Member member = memberRepository.findById(email).orElseThrow();
 
 		member.changeStatus(0);
 		
@@ -108,7 +118,7 @@ public class MemberServiceImpl implements MemberService {
 	@Override
 	public PageResponseDTO<MemberDTO> list(SearchDTO searchDTO) {
 		Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, // 1 페이지가 0 이므로 주의
-				searchDTO.getSize(), Sort.by("no").descending());
+				searchDTO.getSize(), Sort.by("regDate").descending());
 		
 		Page<Member> result = null;
 		if(searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) {
@@ -122,8 +132,10 @@ public class MemberServiceImpl implements MemberService {
 		}
 		
 		List<MemberDTO> dtoList = result.getContent().stream().map(member -> {
-	        MemberDTO dto = modelMapper.map(member, MemberDTO.class);
-
+	        MemberDTO dto = new MemberDTO(member.getEmail(), member.getPw(), member.getNickname(), member.isSocial(), 
+	        		member.getMemberRoleSet().stream().map(memberRole -> memberRole.name()).collect(Collectors.toSet()), member.getRegDate());
+	        
+	        
 	        List<String> fileNameList = member.getThumbnailList().stream()
 	                .map(thumbnail -> thumbnail.getFileName())
 	                .collect(Collectors.toList());
@@ -147,7 +159,7 @@ public class MemberServiceImpl implements MemberService {
 
 	@Override
 	public void updateToThumbnail(MemberDTO memberDTO) {
-	    Member member = memberRepository.findById(memberDTO.getNo()).orElseThrow();
+	    Member member = memberRepository.findById(memberDTO.getEmail()).orElseThrow();
 
 	    member.clearList();
 	    
@@ -162,5 +174,4 @@ public class MemberServiceImpl implements MemberService {
 
 	    memberRepository.save(member);
 	}
-
 }

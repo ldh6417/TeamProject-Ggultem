@@ -12,19 +12,23 @@ import org.springframework.data.repository.query.Param;
 
 import com.honey.domain.Member;
 
-public interface MemberRepository extends JpaRepository<Member, Long> {
+public interface MemberRepository extends JpaRepository<Member, String> {
 
 	List<Member> findByStopEndDateBeforeAndEnabledIn(LocalDateTime now, List<Integer> statuses);
 	
 	@EntityGraph(attributePaths = {"thumbnailList"})
 	@Query("SELECT m FROM Member m WHERE " +
 	       "( (:searchType = 'id' AND m.id LIKE %:keyword%) OR " +
-	       "  (:searchType = 'nickName' AND m.nickName LIKE %:keyword%) OR " +
-	       "  (:searchType = 'all' AND (m.id LIKE %:keyword% OR m.nickName LIKE %:keyword%)) ) " +
+	       "  (:searchType = 'nickname' AND m.nickname LIKE %:keyword%) OR " +
+	       "  (:searchType = 'all' AND (m.id LIKE %:keyword% OR m.nickname LIKE %:keyword%)) ) " +
 	       "OR " + // searchType이 없거나 비었을 때의 처리
-	       "( (:searchType IS NULL OR :searchType = '') AND (m.id LIKE %:keyword% OR m.nickName LIKE %:keyword%) )")
+	       "( (:searchType IS NULL OR :searchType = '') AND (m.id LIKE %:keyword% OR m.nickname LIKE %:keyword%) )")
 	Page<Member> searchByCondition(@Param("searchType") String searchType, 
 	                               @Param("keyword") String keyword, 
 	                               Pageable pageable);
+	
+	@EntityGraph(attributePaths = { "memberRoleSet" }) 
+	@Query("select m from Member m where m.email = :email") 
+	Member getWithRoles(@Param("email") String email); 
 	
 }

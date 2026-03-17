@@ -7,15 +7,15 @@ import com.honey.dto.SearchDTO;
 
 public interface MemberService {
 
-	public MemberDTO get(Long no);
+	public MemberDTO get(String email);
 
-	public Long register(MemberDTO memberDTO);
+	public String register(MemberDTO memberDTO);
 
 	public PageResponseDTO<MemberDTO> list(SearchDTO searchDTO);
 
 	public void modify(MemberDTO memberDTO);
 
-	public void remove(Long no);
+	public void remove(String email);
 
 	public void updateToThumbnail(MemberDTO memberDTO);
 
