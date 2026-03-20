@@ -18,7 +18,6 @@ import com.honey.dto.PageResponseDTO;
 import com.honey.dto.SearchDTO;
 import com.honey.repository.BoardRepository;
 import com.honey.repository.MemberRepository;
-import com.honey.util.CustomFileUtil;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -30,181 +29,196 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class BoardServiceImpl implements BoardService {
 
-	private final ModelMapper modelMapper;
-	private final CustomFileUtil fileUtil;
-	private final BoardRepository boardRepository;
-	private final MemberRepository memberRepository;
+    private final ModelMapper modelMapper;
+    private final BoardRepository boardRepository;
+    private final MemberRepository memberRepository;
 
-	// =========================
-	// 일반 사용자
-	// =========================
+    // =========================
+    // 게시글 등록
+    // =========================
+    @Override
+    public Integer register(BoardDTO boardDTO) {
 
-	// 게시글 등록
-	@Override
-	public Integer register(BoardDTO boardDTO) {
+        Member member = memberRepository.findById(boardDTO.getEmail()).orElseThrow();
 
-		Member member = memberRepository.findById(boardDTO.getEmail()).orElseThrow();
+        Board board = Board.builder()
+                .title(boardDTO.getTitle())
+                .writer(member.getNickname())
+                .content(boardDTO.getContent())
+                .viewCount(0)
+                .enabled(1)
+                .member(member)
+                .build();
 
-		Board board = Board.builder().title(boardDTO.getTitle()).writer(member.getNickname()) // 프론트 값 안 믿고 서버에서 설정
-				.content(boardDTO.getContent()).viewCount(0).enabled(1).member(member).build();
+        // Controller에서 전달받은 파일명 사용
+        List<String> uploadFileNames = boardDTO.getUploadFileNames();
 
-		List<String> uploadFileNames = fileUtil.saveFiles(boardDTO.getFiles());
+        if (uploadFileNames != null) {
+            uploadFileNames.forEach(board::addImageString);
+        }
 
-		if (uploadFileNames != null) {
-			uploadFileNames.forEach(board::addImageString);
-		}
+        return boardRepository.save(board).getBoardNo();
+    }
 
-		return boardRepository.save(board).getBoardNo();
-	}
+    // =========================
+    // 게시글 조회
+    // =========================
+    @Override
+    public BoardDTO get(Integer boardNo) {
 
-	// 게시글 조회
-	@Override
-	public BoardDTO get(Integer boardNo) {
+        Board board = boardRepository.findById(boardNo).orElseThrow();
 
-		Board board = boardRepository.findById(boardNo).orElseThrow();
+        board.changeViewCount(board.getViewCount() + 1);
 
-		board.changeViewCount(board.getViewCount() + 1);
+        BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
 
-		BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
+        List<String> fileNames = board.getBoardImage()
+                .stream()
+                .map(img -> img.getFileName())
+                .toList();
 
-		List<String> fileNames = board.getBoardImage().stream().map(img -> img.getFileName()).toList();
+        boardDTO.setUploadFileNames(fileNames);
 
-		boardDTO.setUploadFileNames(fileNames);
+        return boardDTO;
+    }
 
-		return boardDTO;
-	}
+    // =========================
+    // 게시글 수정
+    // =========================
+    @Override
+    public void modify(BoardDTO boardDTO) {
 
-	// 게시글 수정
-	@Override
-	public void modify(BoardDTO boardDTO) {
+        Board board = boardRepository.findById(boardDTO.getBoardNo()).orElseThrow();
 
-		Board board = boardRepository.findById(boardDTO.getBoardNo()).orElseThrow();
+        board.changeTitle(boardDTO.getTitle());
+        board.changeWriter(boardDTO.getWriter());
 
-		board.changeTitle(boardDTO.getTitle());
-		board.changeWriter(boardDTO.getWriter());
+        // Controller에서 이미 처리된 파일명 사용
+        List<String> uploadFileNames = boardDTO.getUploadFileNames();
 
-		List<String> oldFileNames = board.getBoardImage().stream().map(img -> img.getFileName()).toList();
+        board.clearList();
 
-		List<String> newUploadFileNames = fileUtil.saveFiles(boardDTO.getFiles());
+        if (uploadFileNames != null) {
+            uploadFileNames.forEach(board::addImageString);
+        }
 
-		List<String> uploadedFileNames = boardDTO.getUploadFileNames() != null
-				? new ArrayList<>(boardDTO.getUploadFileNames())
-				: new ArrayList<>();
+        boardRepository.save(board);
+    }
 
-		if (newUploadFileNames != null) {
-			uploadedFileNames.addAll(newUploadFileNames);
-		}
+    // =========================
+    // 게시글 삭제 (논리삭제)
+    // =========================
+    @Override
+    public void remove(Integer boardNo) {
 
-		board.clearList();
+        Board board = boardRepository.findById(boardNo).orElseThrow();
 
-		uploadedFileNames.forEach(board::addImageString);
+        board.changeEnabled(0);
 
-		boardRepository.save(board);
+        boardRepository.save(board);
+    }
 
-		// 삭제 파일 처리
-		List<String> removeFiles = oldFileNames.stream().filter(fileName -> !uploadedFileNames.contains(fileName))
-				.toList();
+    // =========================
+    // 게시글 목록
+    // =========================
+    @Override
+    public PageResponseDTO<BoardDTO> list(SearchDTO searchDTO) {
 
-		fileUtil.deleteFiles(removeFiles);
-	}
+        Pageable pageable = PageRequest.of(
+                searchDTO.getPage() - 1,
+                searchDTO.getSize(),
+                Sort.by("boardNo").descending()
+        );
 
-	// 게시글 삭제 (논리삭제 + 파일삭제)
-	@Override
-	public void remove(Integer boardNo) {
+        Page<Board> result;
 
-		Board board = boardRepository.findById(boardNo).orElseThrow();
+        if (searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) {
 
-		List<String> fileNames = board.getBoardImage().stream().map(img -> img.getFileName()).toList();
+            result = boardRepository.searchByCondition(
+                    searchDTO.getSearchType(),
+                    searchDTO.getKeyword(),
+                    pageable
+            );
 
-		if (!fileNames.isEmpty()) {
-			fileUtil.deleteFiles(fileNames);
-		}
+        } else {
 
-		board.changeEnabled(0);
+            result = boardRepository.findAllActive(pageable);
+        }
 
-		boardRepository.save(board);
-	}
+        List<BoardDTO> dtoList = result.getContent().stream().map(board -> {
 
-	// 게시글 목록
-	@Override
-	public PageResponseDTO<BoardDTO> list(SearchDTO searchDTO) {
+            BoardDTO dto = modelMapper.map(board, BoardDTO.class);
 
-		Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize(),
-				Sort.by("boardNo").descending());
+            List<String> fileNames = board.getBoardImage()
+                    .stream()
+                    .map(img -> img.getFileName())
+                    .toList();
 
-		Page<Board> result;
+            dto.setUploadFileNames(fileNames);
 
-		if (searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) {
+            return dto;
 
-			result = boardRepository.searchByCondition(searchDTO.getSearchType(), searchDTO.getKeyword(), pageable);
+        }).collect(Collectors.toList());
 
-		} else {
+        return PageResponseDTO.<BoardDTO>withAll()
+                .dtoList(dtoList)
+                .pageRequestDTO(searchDTO)
+                .totalCount(result.getTotalElements())
+                .build();
+    }
 
-			result = boardRepository.findAllActive(pageable);
-		}
+    // =========================
+    // 관리자
+    // =========================
+    @Override
+    public PageResponseDTO<BoardDTO> adminList(SearchDTO searchDTO) {
 
-		List<BoardDTO> dtoList = result.getContent().stream().map(board -> {
+        Pageable pageable = PageRequest.of(
+                searchDTO.getPage() - 1,
+                searchDTO.getSize(),
+                Sort.by("boardNo").descending()
+        );
 
-			BoardDTO dto = modelMapper.map(board, BoardDTO.class);
+        Page<Board> result;
 
-			List<String> fileNames = board.getBoardImage().stream().map(img -> img.getFileName()).toList();
+        if (searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) {
 
-			dto.setUploadFileNames(fileNames);
+            result = boardRepository.searchByConditionAdmin(
+                    searchDTO.getSearchType(),
+                    searchDTO.getKeyword(),
+                    pageable
+            );
 
-			return dto;
+        } else {
 
-		}).collect(Collectors.toList());
+            result = boardRepository.findAll(pageable);
+        }
 
-		return PageResponseDTO.<BoardDTO>withAll().dtoList(dtoList).pageRequestDTO(searchDTO)
-				.totalCount(result.getTotalElements()).build();
-	}
-	
+        List<BoardDTO> dtoList = result.getContent().stream().map(board -> {
 
-	// =========================
-	// 관리자
-	// =========================
+            BoardDTO dto = modelMapper.map(board, BoardDTO.class);
 
-	@Override
-	public PageResponseDTO<BoardDTO> adminList(SearchDTO searchDTO) {
+            List<String> fileNames = board.getBoardImage()
+                    .stream()
+                    .map(img -> img.getFileName())
+                    .toList();
 
-		Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize(),
-				Sort.by("boardNo").descending());
+            dto.setUploadFileNames(fileNames);
 
-		Page<Board> result;
+            return dto;
 
-		if (searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) {
+        }).toList();
 
-			//  관리자 검색 (삭제 포함)
-			result = boardRepository.searchByConditionAdmin(searchDTO.getSearchType(), searchDTO.getKeyword(),
-					pageable);
+        return PageResponseDTO.<BoardDTO>withAll()
+                .dtoList(dtoList)
+                .pageRequestDTO(searchDTO)
+                .totalCount(result.getTotalElements())
+                .build();
+    }
 
-		} else {
-			//  전체 조회
-			result = boardRepository.findAll(pageable);
-		}
-
-		List<BoardDTO> dtoList = result.getContent().stream().map(board -> {
-
-			BoardDTO dto = modelMapper.map(board, BoardDTO.class);
-
-			List<String> fileNames = board.getBoardImage().stream().map(img -> img.getFileName()).toList();
-
-			dto.setUploadFileNames(fileNames);
-
-			return dto;
-
-		}).toList();
-
-		return PageResponseDTO.<BoardDTO>withAll().dtoList(dtoList).pageRequestDTO(searchDTO)
-				.totalCount(result.getTotalElements()).build();
-	}
-
-	@Override
-	public void adminRemove(Integer boardNo) {
-		Board board = boardRepository.findById(boardNo).orElseThrow();
-
-		// 관리자 삭제
-		board.changeEnabled(0);
-	}
-
+    @Override
+    public void adminRemove(Integer boardNo) {
+        Board board = boardRepository.findById(boardNo).orElseThrow();
+        board.changeEnabled(0);
+    }
 }

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -62,40 +64,45 @@ public class ItemBoardController {
 		itemBoardDTO.setId(id);
 
 		ItemBoardDTO oldItemDTO = itemBoardService.get(id);
-		
+
 		List<String> oldFileNames = oldItemDTO.getUploadFileNames();
-		
+
 		List<MultipartFile> files = itemBoardDTO.getFiles();
-		
+
 		List<String> currentUploadFileNames = null;
-		
-		if(files != null && !files.get(0).isEmpty()) {
+
+		if (files != null && !files.isEmpty() && !files.get(0).isEmpty()) {
 			currentUploadFileNames = fileUtil.saveFiles(files);
 		}
-		
+
 		List<String> uploadedFileNames = itemBoardDTO.getUploadFileNames();
-		
-		if(currentUploadFileNames != null && !currentUploadFileNames.isEmpty()) {
+
+		if (currentUploadFileNames != null && !currentUploadFileNames.isEmpty()) {
 			uploadedFileNames.addAll(currentUploadFileNames);
 		}
 
 		itemBoardService.modify(itemBoardDTO);
-		
-		if(oldFileNames != null && !oldFileNames.isEmpty()) {
-			List<String> removeFiles = oldFileNames.stream().filter(
-					fileName -> uploadedFileNames.indexOf(fileName) == -1).collect(Collectors.toList());
+
+		if (oldFileNames != null && !oldFileNames.isEmpty()) {
+			List<String> removeFiles = oldFileNames.stream()
+					.filter(fileName -> uploadedFileNames.indexOf(fileName) == -1).collect(Collectors.toList());
 			fileUtil.deleteFiles(removeFiles);
 		}
 		return Map.of("RESULT", "SUCCESS");
+	}
+
+	@GetMapping("/view/{fileName}")
+	public ResponseEntity<Resource> viewFileGET(@PathVariable String fileName) {
+		return fileUtil.getFile(fileName);
 	}
 
 	@GetMapping("/delete/{id}")
 	public Map<String, String> remove(@PathVariable(name = "id") Long id) {
 		List<String> oldFileNames = itemBoardService.get(id).getUploadFileNames();
 		itemBoardService.remove(id);
-		
+
 		fileUtil.deleteFiles(oldFileNames);
-		
+
 		return Map.of("RESULT", "SUCCESS");
 	}
 

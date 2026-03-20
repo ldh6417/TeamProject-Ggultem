@@ -37,7 +37,7 @@ public class ItemBoardAdminDTO {
 	private List<String> uploadFileNames = new ArrayList<>();
 	
 	//회원
-	private int no;
 	private String email;
 	private String phone;
+	private String pw;
 }

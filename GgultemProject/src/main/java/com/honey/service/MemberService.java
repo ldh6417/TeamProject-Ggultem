@@ -21,4 +21,6 @@ public interface MemberService {
 
 	public MemberDTO getKakaoMember(String code);
 
+	public MemberDTO getMemberWithGoogle(String accessToken);
+
 }

@@ -1,8 +1,7 @@
 package com.honey.config;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.Collections;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -74,16 +73,23 @@ public class CustomSecurityConfig {
 
 	@Bean
 	public CorsConfigurationSource corsConfigurationSource() {
-		CorsConfiguration configuration = new CorsConfiguration();
-		configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-		configuration.setAllowedMethods(Arrays.asList("HEAD", "GET", "POST", "PUT", "DELETE"));
-		configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
-		// 자격 증명(쿠키, 인증 헤더 등)을 CORS 요청과 함께 보낼 수 있도록 허용
-		configuration.setAllowCredentials(true);
-		// URL 패턴에 따라 CORS 설정을 매핑할 수 있는 객체
-		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-		source.registerCorsConfiguration("/**", configuration);
-		return source;
+	    CorsConfiguration configuration = new CorsConfiguration();
+
+	    // 1. 허용할 도메인 설정 (패턴 대신 리스트로 명시)
+	    configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+	    
+	    // 2. 허용할 HTTP 메서드
+	    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
+	    
+	    // 3. 허용할 헤더 (Authorization 외에 모든 헤더를 허용하는 것이 속 편합니다)
+	    configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
+	    
+	    // 4. 자격 증명 허용
+	    configuration.setAllowCredentials(true);
+
+	    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+	    source.registerCorsConfiguration("/**", configuration);
+	    return source;
 	}
 	
 	@Bean 
@@ -106,6 +112,7 @@ public class CustomSecurityConfig {
                         .build();
                 admin.addRole(MemberRole.MEMBER);
                 admin.addRole(MemberRole.ADMIN);
+                admin.changeStatus(1);
                 
                 // ✅ 기본 썸네일 파일명을 리스트에 명시적으로 추가
                 admin.addImageString("default.jpg");

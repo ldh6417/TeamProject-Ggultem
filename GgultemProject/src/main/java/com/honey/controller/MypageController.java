@@ -63,7 +63,7 @@ public class MypageController {
         List<MultipartFile> files = memberDTO.getFiles();
         
         List<String> currentUploadFileNames = null;
-        if(files != null && !files.get(0).isEmpty()) {
+        if(files != null && !files.isEmpty()) {
         	currentUploadFileNames = fileUtil.saveFiles(files);
         }
         

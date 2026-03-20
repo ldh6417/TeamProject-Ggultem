@@ -22,6 +22,7 @@ public class ItemBoardDTO {
 
 	private Long id;
 	private Member member;
+	private String email;
 	private String title;
 	private String writer;
 	private int price;
