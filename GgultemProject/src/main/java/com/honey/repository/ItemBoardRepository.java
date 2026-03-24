@@ -16,16 +16,40 @@ public interface ItemBoardRepository extends JpaRepository<ItemBoard, Long> {
 	@Query("select i from ItemBoard i where enabled = 0")
 	Page<ItemBoard> findAllList(Pageable pageable);
 
-	@EntityGraph(attributePaths = { "itemList"})
-	@Query("SELECT i FROM ItemBoard i WHERE "
-			+ "( (:searchType = 'title' AND i.title LIKE %:keyword%) OR "
-			+ "  (:searchType = 'writer' AND i.writer LIKE %:keyword%) OR "
-			+ "  (:searchType = 'content' AND i.content LIKE %:keyword%) OR "
-			+ "  (:searchType = 'category' AND i.category LIKE %:keyword%) OR " + // 카테고리 추가
-			"  (:searchType = 'location' AND i.location LIKE %:keyword%) OR " + // 지역 추가
-			"  (:searchType = 'all' AND (i.title LIKE %:keyword% OR i.writer LIKE %:keyword% OR i.content LIKE %:keyword% OR i.category LIKE %:keyword% OR i.location LIKE %:keyword%)) ) "
-			+ "OR "
-			+ "( (:searchType IS NULL OR :searchType = '') AND (i.title LIKE %:keyword% OR i.writer LIKE %:keyword% OR i.content LIKE %:keyword% OR i.category LIKE %:keyword% OR i.location LIKE %:keyword%) )")
+	@EntityGraph(attributePaths = { "itemList" })
+	@Query("SELECT i FROM ItemBoard i WHERE i.enabled = 0 AND ( "
+			+ "(:searchType = 'title' AND i.title LIKE %:keyword%) OR "
+			+ "(:searchType = 'writer' AND i.writer LIKE %:keyword%) OR "
+			+ "(:searchType = 'content' AND i.content LIKE %:keyword%) OR "
+			+ "(:searchType = 'category' AND i.category LIKE %:keyword%) OR "
+			+ "(:searchType = 'status' AND i.status LIKE %:keyword%) OR "
+			+ "(:searchType = 'location' AND i.location LIKE %:keyword%) OR "
+			+ "((:searchType = 'all' OR :searchType IS NULL OR :searchType = '') AND "
+			+ " (i.title LIKE %:keyword% OR i.writer LIKE %:keyword% OR i.content LIKE %:keyword% OR "
+			+ "  i.status LIKE %:keyword% OR i.category LIKE %:keyword% OR i.location LIKE %:keyword%))" + ")")
 	Page<ItemBoard> searchByCondition(@Param("searchType") String searchType, @Param("keyword") String keyword,
+			Pageable pageable);
+
+	@EntityGraph(attributePaths = { "itemList" })
+	@Query("""
+			SELECT i FROM ItemBoard i
+			WHERE i.enabled = 0
+
+			AND (:status = 'all' OR i.status = :status)
+			AND (:category = 'all' OR i.category = :category)
+			AND (:location = 'all' OR i.location = :location)
+
+			AND (
+			    :keyword IS NULL OR :keyword = '' OR
+			    (:searchType = 'title' AND i.title LIKE CONCAT('%', :keyword, '%')) OR
+			    (:searchType = 'content' AND i.content LIKE CONCAT('%', :keyword, '%')) OR
+			    (:searchType = 'all' AND (
+			        i.title LIKE CONCAT('%', :keyword, '%') OR
+			        i.content LIKE CONCAT('%', :keyword, '%')
+			    ))
+			)
+			""")
+	Page<ItemBoard> searchWithFilter(@Param("searchType") String searchType, @Param("keyword") String keyword,
+			@Param("status") String status, @Param("category") String category, @Param("location") String location,
 			Pageable pageable);
 }
