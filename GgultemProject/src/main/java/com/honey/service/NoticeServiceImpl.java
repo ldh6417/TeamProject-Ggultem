@@ -192,7 +192,7 @@ public class NoticeServiceImpl implements NoticeService {
 
 			// 작성자 이름 세팅 (Member 객체에서 추출)
 			if (notice.getMember() != null) {
-			    // 닉네임 필드가 nickname이라면 getNickname()으로!
+			    // 닉네임 필드가 nickname으로 하기로 결정했으니 getNickname()
 			    dto.setWriter(notice.getMember().getNickname()); 
 			}
 
