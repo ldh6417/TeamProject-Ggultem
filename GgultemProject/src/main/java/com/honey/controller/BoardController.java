@@ -133,8 +133,8 @@ public class BoardController {
 	@PostMapping("/upload")
 	public Map<String, String> upload(@RequestParam("file") MultipartFile file) {
 
-	    System.out.println("🔥 파일명: " + file.getOriginalFilename());
-	    System.out.println("🔥 사이즈: " + file.getSize());
+	    System.out.println(" 파일명: " + file.getOriginalFilename());
+	    System.out.println(" 사이즈: " + file.getSize());
 
 	    List<String> saved = fileUtil.saveFiles(List.of(file));
 

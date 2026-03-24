@@ -46,6 +46,7 @@ public class Board extends BaseTimeEntity {
 	
 	@Column(columnDefinition = "CLOB")
 	private String content;
+	
 	private int viewCount;
 	
 	@Builder.Default

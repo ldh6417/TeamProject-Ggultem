@@ -53,13 +53,14 @@ public class CustomSecurityConfig {
 	        //.requestMatchers("/error", "/login").permitAll()
 	        .anyRequest().permitAll() // 임시 : 모두 허용
 	    );
+	    
 		http.formLogin(config ->{  
 		config.loginPage("/login");
 		// 로그인 성공 시 실행될 핸들러 객체를 지정 코드 
 		config.successHandler(new APILoginSuccessHandler());
 		config.failureHandler(new APILoginFailHandler());
 		}); 
-		
+	   
 		// JWT 체크 추가 
 		http.addFilterBefore(new JWTCheckFilter(), UsernamePasswordAuthenticationFilter.class); 
 
