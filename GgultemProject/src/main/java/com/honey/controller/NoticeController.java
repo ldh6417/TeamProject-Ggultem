@@ -3,6 +3,8 @@ package com.honey.controller;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -64,6 +66,11 @@ public class NoticeController {
 	public Map<String, String> remove(@PathVariable(name = "noticeId") Long noticeId){
 		service.remove(noticeId);
 		return Map.of("RESULT", "SUCESS");
+	}
+	
+	@GetMapping("/view/{fileName}")
+	public ResponseEntity<Resource> viewFileGET(@PathVariable String fileName) {
+		return fileUtil.getFile(fileName);
 	}
 	
 }
