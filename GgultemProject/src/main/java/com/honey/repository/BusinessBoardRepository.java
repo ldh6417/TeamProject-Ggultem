@@ -16,10 +16,9 @@ public interface BusinessBoardRepository extends JpaRepository<BusinessBoard, Lo
 		       "( (:searchType = 'title' AND bb.title LIKE %:keyword%) OR " +
 		       "  (:searchType = 'category' AND bb.category LIKE %:keyword%) OR " +
 		       "  (:searchType = 'content' AND bb.content LIKE %:keyword%) OR " +
-		       "  (:searchType = 'sign' AND bb.sign LIKE %:keyword%) OR " +
-		       "  (:searchType = 'all' AND (bb.title LIKE %:keyword% OR bb.category LIKE %:keyword% OR bb.content LIKE %:keyword% OR bb.sign LIKE %:keyword%)) ) " +
+		       "  (:searchType = 'all' AND (bb.title LIKE %:keyword% OR bb.category LIKE %:keyword% OR bb.content LIKE %:keyword%)) ) " +
 		       "OR " + // searchType이 없거나 비었을 때의 처리
-		       "( (:searchType IS NULL OR :searchType = '') AND (bb.title LIKE %:keyword% OR bb.category LIKE %:keyword% OR bb.content LIKE %:keyword% OR bb.sign LIKE %:keyword%) )")
+		       "( (:searchType IS NULL OR :searchType = '') AND (bb.title LIKE %:keyword% OR bb.category LIKE %:keyword% OR bb.content LIKE %:keyword%) )")
 	Page<BusinessBoard> searchByCondition(@Param("searchType") String searchType, @Param("keyword") String keyword, Pageable pageable);
 	
 }

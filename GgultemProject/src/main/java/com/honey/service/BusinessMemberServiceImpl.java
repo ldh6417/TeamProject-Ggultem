@@ -1,6 +1,7 @@
 package com.honey.service;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.DefaultUriBuilderFactory;
@@ -82,10 +87,22 @@ public class BusinessMemberServiceImpl implements BusinessMemberService {
 		
 		Page<Member> result = null;
 		if(searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) {
-			result = bMemberRepository.searchByCondition(
-					searchDTO.getSearchType(),
-					searchDTO.getKeyword(),
-					pageable);
+			
+			if(searchDTO.getBusinessVerified() != null) {
+				result = bMemberRepository.searchByConditionFilter(
+						searchDTO.getSearchType(),
+						searchDTO.getKeyword(),
+						Boolean.parseBoolean(searchDTO.getBusinessVerified()),
+						pageable);
+			} else {
+				result = bMemberRepository.searchByCondition(
+						searchDTO.getSearchType(),
+						searchDTO.getKeyword(),
+						pageable);
+			}
+			
+		} else if(searchDTO.getBusinessVerified() != null) {
+			result = bMemberRepository.findAllBusinessFilter(pageable, Boolean.parseBoolean(searchDTO.getBusinessVerified()));
 		} else {
 			result = bMemberRepository.findAllBusiness(pageable);
 		}
@@ -127,19 +144,32 @@ public class BusinessMemberServiceImpl implements BusinessMemberService {
 	            .build(true) // 이미 인코딩된 상태라면 true, 아니면 false
 	            .toUri();
 
-	    // 🚩 국세청 API 규격에 맞게 JSON 바디 구성
+	 // 수정 제안
 	    Map<String, Object> requestBody = new HashMap<>();
-	 // 호출하기 직전에 숫자만 남기기
 	    String cleanBNo = businessNumber.replaceAll("-", ""); 
-	    requestBody.put("b_no", new String[]{cleanBNo});
+	    requestBody.put("b_no", Collections.singletonList(cleanBNo)); // 명시적인 리스트 전달
+
+	 // HttpHeaders 설정 추가
+	    HttpHeaders headers = new HttpHeaders();
+	    headers.setContentType(MediaType.APPLICATION_JSON);
+
+	    // HttpEntity로 감싸서 보내기
+	    HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
 	    try {
-	    	Map<String, Object> response = restTemplate.postForObject(uri, requestBody, Map.class);
-	        List<Map<String, Object>> data = (List<Map<String, Object>>) response.get("data");
+	        ResponseEntity<Map> responseEntity = restTemplate.postForEntity(uri, entity, Map.class);
+	        Map<String, Object> response = responseEntity.getBody();
 	        
-	        // 🚩 b_stt_cd가 "01"이면 계속 사업을 하고 있다는 뜻입니다.
-	        String status = (String) data.get(0).get("b_stt_cd");
-	        return "01".equals(status);
+	        if (response != null && response.containsKey("data")) {
+	            List<Map<String, Object>> data = (List<Map<String, Object>>) response.get("data");
+	            
+	            if (data != null && !data.isEmpty()) {
+	                // b_stt_cd가 "01"이면 계속 사업을 하고 있다는 뜻
+	                String status = (String) data.get(0).get("b_stt_cd");
+	                return "01".equals(status);
+	            }
+	        }
+	        return false; // 데이터가 없거나 형식이 다를 경우
 	    } catch (Exception e) {
 	        log.error("API 호출 에러: " + e.getMessage());
 	        return false;

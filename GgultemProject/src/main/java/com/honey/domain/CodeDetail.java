@@ -39,5 +39,9 @@ public class CodeDetail extends BaseTimeEntity {
 	public void changeCodeName(String codeName) {
 		this.codeName = codeName;
 	}
+	
+	public void changeUseYn(String useYn) {
+		this.useYn = useYn;
+	}
 
 }

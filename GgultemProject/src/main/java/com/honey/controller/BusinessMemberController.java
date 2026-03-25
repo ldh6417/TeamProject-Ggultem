@@ -81,6 +81,11 @@ public class BusinessMemberController {
 	
 	@GetMapping("/list")
 	public PageResponseDTO<MemberDTO> list(SearchDTO searchDTO) {
+		
+		if(searchDTO.getBusinessVerified().equals("all")) {
+			searchDTO.setBusinessVerified(null);
+		}
+		
 		return businessService.list(searchDTO);
 	}
 	

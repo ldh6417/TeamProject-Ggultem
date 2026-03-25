@@ -21,14 +21,30 @@ public interface MemberRepository extends JpaRepository<Member, String> {
 	
 	@EntityGraph(attributePaths = {"thumbnailList"})
 	@Query("SELECT m FROM Member m WHERE " +
-	       "( (:searchType = 'id' AND m.id LIKE %:keyword%) OR " +
-	       "  (:searchType = 'nickname' AND m.nickname LIKE %:keyword%) OR " +
-	       "  (:searchType = 'all' AND (m.id LIKE %:keyword% OR m.nickname LIKE %:keyword%)) ) " +
-	       "OR " + // searchType이 없거나 비었을 때의 처리
-	       "( (:searchType IS NULL OR :searchType = '') AND (m.id LIKE %:keyword% OR m.nickname LIKE %:keyword%) )")
+			"( (:searchType = 'email' AND m.email LIKE %:keyword%) OR " +
+			"  (:searchType = 'nickname' AND m.nickname LIKE %:keyword%) OR " +
+			"  (:searchType = 'all' AND (m.email LIKE %:keyword% OR m.nickname LIKE %:keyword%)) ) " +
+			"OR " +
+			"( (:searchType IS NULL OR :searchType = '') AND (m.email LIKE %:keyword% OR m.nickname LIKE %:keyword%) )")
 	Page<Member> searchByCondition(@Param("searchType") String searchType, 
-	                               @Param("keyword") String keyword, 
+			@Param("keyword") String keyword,
+			Pageable pageable);
+	
+	@EntityGraph(attributePaths = {"thumbnailList"})
+	@Query("SELECT m FROM Member m WHERE " +
+	       "( (:searchType = 'email' AND m.email LIKE %:keyword% AND m.enabled = :enabled) OR " +
+	       "  (:searchType = 'nickname' AND m.nickname LIKE %:keyword% AND m.enabled = :enabled) OR " +
+	       "  (:searchType = 'all' AND ((m.email LIKE %:keyword% OR m.nickname LIKE %:keyword%) AND m.enabled = :enabled)) ) " +
+	       "OR " +
+	       "( (:searchType IS NULL OR :searchType = '') AND (m.email LIKE %:keyword% OR m.nickname LIKE %:keyword% OR m.enabled = :enabled) )")
+	Page<Member> searchByConditionFilter(@Param("searchType") String searchType, 
+	                               @Param("keyword") String keyword,
+	                               @Param("enabled") Integer enabled,
 	                               Pageable pageable);
+	
+	@Query("SELECT m FROM Member m WHERE m.enabled = :enabled")
+	Page<Member> findAllFilter(Pageable pageable, @Param("enabled") Integer enabled);
+	
 	
 	@EntityGraph(attributePaths = { "memberRoleSet" }) 
 	@Query("select m from Member m where m.email = :email") 
@@ -38,5 +54,6 @@ public interface MemberRepository extends JpaRepository<Member, String> {
 	@Transactional 
 	@Query("update Member m set m.businessNumber = :bn, m.companyName = :cn where m.email = :email")
 	int businessRegister(@Param("bn") String bn, @Param("cn") String cn, @Param("email") String email);
+
 	
 }

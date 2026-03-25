@@ -38,26 +38,22 @@ public class BusinessBoard extends BaseTimeEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "BUSINESS_BOARD_SEQ_GEN")
 	private Long no;
-	@Column(nullable = false)
 	private String title;
-	
-	@Column(nullable = false)
 	private int price;
-	
-	@Column(nullable = false)
 	private String category;
-	
-	@Column(nullable = false)
 	private String content;
+	private String writer;
+	private String moveUrl;
 	
 	@ManyToOne(fetch = FetchType.LAZY) // 지연 로딩 권장
     @JoinColumn(name = "MEMBER_EMAIL") // DB 컬럼명
-    private Member writer;
+    private Member member;
 	
 	private LocalDateTime dtdDate;
 	private LocalDateTime endDate;
+	private int viewCount;
 	private int enabled;
-	private char sign;
+	private boolean sign;
 	
 	@ElementCollection 
 	@Builder.Default 
@@ -75,8 +71,8 @@ public class BusinessBoard extends BaseTimeEntity {
 	public void changeCategory(String category) {
 		this.category = category;
 	}
-	public void setWriter(Member member) {
-		this.writer = member;
+	public void setMember(Member member) {
+		this.member = member;
 	}
 	public void changeEnabled(int enabled) {
 		this.enabled = enabled;
@@ -86,7 +82,12 @@ public class BusinessBoard extends BaseTimeEntity {
 			this.dtdDate = now;
 		}
 	}
-	public void changeSign(char sign) {
+	
+	public void setViewCount(int viewCount) {
+		this.viewCount = viewCount;
+	}
+	
+	public void changeSign(boolean sign) {
         this.sign = sign;
     }
 	public void setEndDate(LocalDateTime endDate) {

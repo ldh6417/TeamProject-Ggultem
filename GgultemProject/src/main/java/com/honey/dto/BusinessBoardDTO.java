@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -24,10 +25,12 @@ public class BusinessBoardDTO {
 	private Integer price;
 	private String category;
 	private String content;
-	private String memberEmail;
+	private String email;
 	private String writer;
+	private Integer viewCount;
 	private Integer enabled;
-	private String sign;
+	private Boolean sign;
+	private String moveUrl;
 	
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private LocalDateTime regDate;
@@ -35,8 +38,8 @@ public class BusinessBoardDTO {
 	private LocalDateTime updDate;
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private LocalDateTime dtdDate;
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-	private LocalDateTime endDate;
+	
+	private String endDate;
 	
 	@Builder.Default
 	private List<MultipartFile> files = new ArrayList<>();

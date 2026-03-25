@@ -51,7 +51,7 @@ public class CodeDetailController {
 		return Map.of("RESULT", "SUCCESS");
 	}
 	
-	@DeleteMapping("/remove/{groupCode}")
+	@DeleteMapping("/remove/{groupCode}/{codeValue}")
 	public Map<String, String> remove(@PathVariable(name = "groupCode") String groupCode,
 			@PathVariable(name = "codeValue") String codeValue) {
 		service.remove(groupCode, codeValue);

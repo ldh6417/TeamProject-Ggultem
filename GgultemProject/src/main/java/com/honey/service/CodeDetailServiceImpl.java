@@ -96,6 +96,7 @@ public class CodeDetailServiceImpl implements CodeDetailService {
 		CodeDetail codeDetail = result.orElseThrow();
 
 		codeDetail.changeCodeName(codeDetailDTO.getCodeName());
+		codeDetail.changeUseYn(codeDetailDTO.getUseYn());
 
 		repository.save(codeDetail);
 	}

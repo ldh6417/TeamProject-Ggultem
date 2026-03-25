@@ -79,6 +79,11 @@ public class MemberController {
 
 	@GetMapping("/list")
 	public PageResponseDTO<MemberDTO> list(SearchDTO searchDTO) {
+		
+		if(searchDTO.getEnabled().equals("all")) {
+			searchDTO.setEnabled(null);
+		}
+		
 		return service.list(searchDTO);
 	}
 

@@ -1,5 +1,6 @@
 package com.honey.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -36,26 +37,81 @@ public class BusinessBoardServiceImpl implements BusinessBoardService {
 	private final MemberRepository memberRepository;
 	private final CustomFileUtil fileUtil;
 	
+	// 1. 등록(register) 메서드 수정
 	@Override
 	public Long register(BusinessBoardDTO businessBoardDTO) {
-		Member writer = memberRepository.findById(businessBoardDTO.getMemberEmail())
+	    Member member = memberRepository.findById(businessBoardDTO.getEmail())
 	            .orElseThrow(() -> new RuntimeException("작성자 정보를 찾을 수 없습니다."));
-		
-		BusinessBoard businessBoard = modelMapper.map(businessBoardDTO, BusinessBoard.class);
-		
-		businessBoard.changeEnabled(1);
-		businessBoard.changeSign('N');
-		businessBoard.setWriter(writer);
-		businessBoard.setEndDate(businessBoardDTO.getEndDate());
-		
-		List<String> newFileNames = businessBoardDTO.getUploadFileNames();
-	    if (newFileNames != null && !newFileNames.isEmpty()) {
-	        newFileNames.forEach(fileName -> {
-	        	businessBoard.addImageString(fileName);
-	        });
+	    
+	    BusinessBoard businessBoard = BusinessBoard.builder()
+	            .title(businessBoardDTO.getTitle())
+	            .content(businessBoardDTO.getContent())
+	            .price(businessBoardDTO.getPrice())
+	            .category(businessBoardDTO.getCategory())
+	            .writer(businessBoardDTO.getWriter())
+	            .moveUrl(businessBoardDTO.getMoveUrl())
+	            .viewCount(0)
+	            .member(member) // 연관 관계 직접 세팅
+	            .enabled(1)
+	            .sign(false)
+	            .build();
+	    
+	    if (businessBoardDTO.getEndDate() != null && !businessBoardDTO.getEndDate().isEmpty()) {
+	        try {
+	            LocalDateTime endLDT = java.time.LocalDate.parse(businessBoardDTO.getEndDate()).atStartOfDay();
+	            businessBoard.setEndDate(endLDT);
+	        } catch (Exception e) {
+	            log.error("날짜 변환 실패: " + e.getMessage());
+	        }
 	    }
-		
-		return boardRepository.save(businessBoard).getNo();
+	    
+	    // 파일 처리
+	    List<String> newFileNames = businessBoardDTO.getUploadFileNames();
+	    if (newFileNames != null && !newFileNames.isEmpty()) {
+	        businessBoard.clearList(); // 초기화 후 추가
+	        newFileNames.forEach(businessBoard::addImageString);
+	    }
+	    
+	    return boardRepository.save(businessBoard).getNo();
+	}
+
+	// 2. 리스트(list) 메서드 수정
+	@Override
+	@Transactional(readOnly = true)
+	public PageResponseDTO<BusinessBoardDTO> list(SearchDTO searchDTO) {
+	    Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, 
+	            searchDTO.getSize(), Sort.by("no").descending());
+	    
+	    Page<BusinessBoard> result = (searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) 
+	            ? boardRepository.searchByCondition(searchDTO.getSearchType(), searchDTO.getKeyword(), pageable)
+	            : boardRepository.findAll(pageable);
+	    
+	    List<BusinessBoardDTO> dtoList = result.getContent().stream().map(businessBoard -> {
+	        BusinessBoardDTO dto = modelMapper.map(businessBoard, BusinessBoardDTO.class);
+	        
+	        // 🚩 이메일 및 날짜 수동 매핑 (타입이 달라 ModelMapper가 놓친 부분)
+	        if (businessBoard.getMember() != null) {
+	            dto.setEmail(businessBoard.getMember().getEmail());
+	        }
+	        
+	        // LocalDateTime -> String 변환 (리스트에서 날짜를 보여줘야 한다면)
+	        if (businessBoard.getEndDate() != null) {
+	            dto.setEndDate(businessBoard.getEndDate().toLocalDate().toString());
+	        }
+
+	        List<String> fileNameList = businessBoard.getBItemList().stream()
+	                .map(item -> item.getFileName())
+	                .collect(Collectors.toList());
+	        dto.setUploadFileNames(fileNameList);
+	        
+	        return dto;
+	    }).collect(Collectors.toList());
+	    
+	    return PageResponseDTO.<BusinessBoardDTO>withAll()
+	            .dtoList(dtoList)
+	            .pageRequestDTO(searchDTO)
+	            .totalCount(result.getTotalElements())
+	            .build();
 	}
 
 	@Override
@@ -66,7 +122,7 @@ public class BusinessBoardServiceImpl implements BusinessBoardService {
 		
 		BusinessBoardDTO businessBoardDTO = modelMapper.map(businessBoard, BusinessBoardDTO.class);
 		
-		businessBoardDTO.setWriter(businessBoard.getWriter().getNickname());
+		businessBoardDTO.setEmail(businessBoard.getMember().getEmail());
 		
 		List<String> fileNameList = businessBoard.getBItemList().stream().map(item -> item.getFileName())
 				.collect(Collectors.toList());
@@ -79,54 +135,11 @@ public class BusinessBoardServiceImpl implements BusinessBoardService {
 	}
 
 	@Override
-	@Transactional(readOnly = true)
-	public PageResponseDTO<BusinessBoardDTO> list(SearchDTO searchDTO) {
-		Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, // 1 페이지가 0 이므로 주의
-				searchDTO.getSize(), Sort.by("no").descending());
-		
-		Page<BusinessBoard> result = null; 
-		if(searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) {
-			result = boardRepository.searchByCondition(
-					searchDTO.getSearchType(),
-					searchDTO.getKeyword(),
-					pageable);
-		} else {
-			result = boardRepository.findAll(pageable);
-		}
-		
-		List<BusinessBoardDTO> dtoList = result.getContent().stream().map(businessBoard -> {
-			BusinessBoardDTO dto = modelMapper.map(businessBoard, BusinessBoardDTO.class);
-			
-			// 작성자 닉네임 세팅 (이걸 안 하면 리스트에 이메일만 나오거나 null이 나옵니다)
-		    if (businessBoard.getWriter() != null) {
-		        dto.setWriter(businessBoard.getWriter().getNickname());
-		    }
-
-	        List<String> fileNameList = businessBoard.getBItemList().stream()
-	                .map(item -> item.getFileName())
-	                .collect(Collectors.toList());
-
-	        if (fileNameList != null && !fileNameList.isEmpty()) {
-	            dto.setUploadFileNames(fileNameList);
-	        }
-		
-		return dto;
-		}).collect(Collectors.toList());
-		
-		long totalCount = result.getTotalElements();
-		
-		PageResponseDTO<BusinessBoardDTO> responseDTO = PageResponseDTO.<BusinessBoardDTO>withAll().dtoList(dtoList)
-				.pageRequestDTO(searchDTO).totalCount(totalCount).build();
-		
-		return responseDTO;
-	}
-
-	@Override
 	public void approve(Long no) {
 		Optional<BusinessBoard> result = boardRepository.findById(no);
 		BusinessBoard businessBoard = result.orElseThrow();
 		
-		businessBoard.changeSign('Y');
+		businessBoard.changeSign(true);
 		
 		boardRepository.save(businessBoard);
 	}
@@ -166,7 +179,18 @@ public class BusinessBoardServiceImpl implements BusinessBoardService {
 		businessBoard.changePrice(businessBoardDTO.getPrice());
 		businessBoard.changeContent(businessBoardDTO.getContent());
 		businessBoard.changeCategory(businessBoardDTO.getCategory());
-		businessBoard.setEndDate(businessBoardDTO.getEndDate());
+		// 2. [핵심] 타입이 다른 endDate를 지훈님이 직접 수동으로 세팅하세요!
+	    if (businessBoardDTO.getEndDate() != null && !businessBoardDTO.getEndDate().isEmpty()) {
+	        try {
+	            // String "2026-06-30" -> LocalDateTime 변환
+	            String dateStr = businessBoardDTO.getEndDate();
+	            // LocalDate로 파싱 후 시간(00:00:00) 추가
+	            LocalDateTime endLDT = java.time.LocalDate.parse(dateStr).atStartOfDay(); 
+	            businessBoard.setEndDate(endLDT);
+	        } catch (Exception e) {
+	            log.error("날짜 변환 실패: " + e.getMessage());
+	        }
+	    }
 		
 		
 		boardRepository.save(businessBoard);

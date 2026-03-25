@@ -163,11 +163,18 @@ public class MemberServiceImpl implements MemberService {
 	public PageResponseDTO<MemberDTO> list(SearchDTO searchDTO) {
 		Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, // 1 페이지가 0 이므로 주의
 				searchDTO.getSize(), Sort.by("regDate").descending());
+		
+		log.info(searchDTO.toString());
 
 		Page<Member> result = null;
 		if (searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) {
-			// searchLogSearvice.logSearch(searchDTO);
-			result = memberRepository.searchByCondition(searchDTO.getSearchType(), searchDTO.getKeyword(), pageable);
+			if(searchDTO.getEnabled() != null) {
+				result = memberRepository.searchByConditionFilter(searchDTO.getSearchType(), searchDTO.getKeyword(), Integer.parseInt(searchDTO.getEnabled()), pageable);
+			} else {
+				result = memberRepository.searchByCondition(searchDTO.getSearchType(), searchDTO.getKeyword(), pageable);
+			}
+		} else if(searchDTO.getEnabled() != null) {
+			result = memberRepository.findAllFilter(pageable, Integer.parseInt(searchDTO.getEnabled()));
 		} else {
 			result = memberRepository.findAll(pageable);
 		}
@@ -195,6 +202,8 @@ public class MemberServiceImpl implements MemberService {
 
 		PageResponseDTO<MemberDTO> responseDTO = PageResponseDTO.<MemberDTO>withAll().dtoList(dtoList)
 				.pageRequestDTO(searchDTO).totalCount(totalCount).build();
+		
+		log.info(responseDTO.toString());
 
 		return responseDTO;
 	}
