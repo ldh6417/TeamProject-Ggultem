@@ -55,6 +55,23 @@ public class BusinessBoardPageController {
 		return businessBoardService.list(searchDTO);
 	}
 	
+	@GetMapping("/adlist")
+	public List<BusinessBoardDTO> adlist() {
+		return businessBoardService.adPSlist();
+	}
+	
+	@GetMapping("/adpllist")
+	public List<BusinessBoardDTO> adPlList() {
+		return businessBoardService.adPlList();
+	}
+	
+	@PutMapping("/viewcount/{no}")
+	public Map<String, String> viewCountAdd(@PathVariable(name = "no") Long no) {
+		log.info("화면에서 넘어온 no 값 : " + no);
+		businessBoardService.viewCountAdd(no);
+		return Map.of("RESULT", "SUCCESS");
+	}
+	
 	@PutMapping("/modify/{no}")
 	public Map<String, String> modify(@PathVariable(name = "no") Long no, BusinessBoardDTO businessBoardDTO) {
 		businessBoardDTO.setNo(no);

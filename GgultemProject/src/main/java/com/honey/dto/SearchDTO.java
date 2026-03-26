@@ -19,4 +19,8 @@ public class SearchDTO extends PageRequestDTO {
 	
 	//비즈니스멤버용
 	private String businessVerified;
+	
+	//비즈니스 광고용
+	private String sign;
+	private String category;
 }
