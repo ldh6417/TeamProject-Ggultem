@@ -1,5 +1,7 @@
 package com.honey.service;
 
+import java.util.List;
+
 import com.honey.dto.BusinessBoardDTO;
 import com.honey.dto.MemberDTO;
 import com.honey.dto.PageRequestDTO;
@@ -19,5 +21,13 @@ public interface BusinessBoardService {
 	public void modify(BusinessBoardDTO businessBoardDTO, BusinessBoardDTO oldBusinessBoardDTO);
 
 	public void remove(Long no);
+
+	public List<BusinessBoardDTO> adPSlist();
+
+	public void viewCountAdd(Long no);
+
+	public List<BusinessBoardDTO> adPlList();
+
+	public void reject(Long no);
 
 }

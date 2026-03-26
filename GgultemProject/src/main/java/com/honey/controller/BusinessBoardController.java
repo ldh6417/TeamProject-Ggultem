@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.honey.dto.BusinessBoardDTO;
+import com.honey.dto.MemberDTO;
 import com.honey.dto.PageResponseDTO;
 import com.honey.dto.SearchDTO;
 import com.honey.service.BusinessBoardService;
@@ -50,6 +51,15 @@ public class BusinessBoardController {
 	
 	@GetMapping("/list")
 	public PageResponseDTO<BusinessBoardDTO> list(SearchDTO searchDTO) {
+		
+			if(searchDTO.getSign().equals("all")) {
+				searchDTO.setSign(null);
+			}
+			
+			if(searchDTO.getCategory().equals("all")) {
+				searchDTO.setCategory(null);
+			}
+		
 		return businessBoardService.list(searchDTO);
 	}
 	
@@ -57,6 +67,14 @@ public class BusinessBoardController {
 	public Map<String, String> approve(@PathVariable(name = "no") Long no) {
 		
 		businessBoardService.approve(no);
+		
+		return Map.of("RESULT", "SUCCESS");
+	}
+	
+	@GetMapping("/reject/{no}") // 비즈니스 회원 게시판 승인로직
+	public Map<String, String> reject(@PathVariable(name = "no") Long no) {
+		
+		businessBoardService.reject(no);
 		
 		return Map.of("RESULT", "SUCCESS");
 	}
