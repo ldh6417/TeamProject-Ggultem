@@ -43,7 +43,7 @@ public class ItemBoardReplyServiceImpl implements ItemBoardReplyService {
 						.itemId(reply.getItemBoard().getId()).email(reply.getMember().getEmail())
 						.content(reply.getContent())
 						.regDate(reply.getRegDate())
-						.parentReplyNo(reply.getParent() != null ? reply.getParent().getReplyNo() : null).enabled(1)
+						.parentReplyNo(reply.getParent() != null ? reply.getParent().getReplyNo() : null).enabled(reply.getEnabled())
 						.itemTitle(reply.getItemBoard().getTitle()).nickname(reply.getMember().getNickname()).build())
 				.collect(Collectors.toMap(ItemBoardReplyDTO::getReplyNo, dto -> dto));
 

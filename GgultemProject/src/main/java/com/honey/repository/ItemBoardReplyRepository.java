@@ -20,7 +20,7 @@ public interface ItemBoardReplyRepository extends JpaRepository<ItemBoardReply, 
 	Page<ItemBoardReply> searchAdminReplyList(@Param("enabled") Integer enabled, @Param("searchType") String searchType,
 			@Param("keyword") String keyword, Pageable pageable);
 
-	@Query("SELECT r FROM ItemBoardReply r " + "WHERE r.itemBoard.id = :id AND r.enabled = 1 "
+	@Query("SELECT r FROM ItemBoardReply r " + "WHERE r.itemBoard.id = :id AND r.enabled >= 0 "
 			+ "ORDER BY r.replyNo ASC")
 	List<ItemBoardReply> getRepliesByItem(@Param("id") Long id);
 }

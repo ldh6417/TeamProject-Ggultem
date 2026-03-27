@@ -18,7 +18,7 @@ public interface ItemBoardRepository extends JpaRepository<ItemBoard, Long> {
 
 	// 검색 조건
 	@EntityGraph(attributePaths = { "itemList" })
-	@Query("SELECT i FROM ItemBoard i WHERE i.enabled = 0 AND ( "
+	@Query("SELECT i FROM ItemBoard i WHERE i.enabled >= 1 AND ( "
 			+ "(:searchType = 'title' AND i.title LIKE %:keyword%) OR "
 			+ "(:searchType = 'writer' AND i.writer LIKE %:keyword%) OR "
 			+ "(:searchType = 'content' AND i.content LIKE %:keyword%) OR "
@@ -35,12 +35,14 @@ public interface ItemBoardRepository extends JpaRepository<ItemBoard, Long> {
 	@EntityGraph(attributePaths = { "itemList" })
 	@Query("""
 			SELECT i FROM ItemBoard i
-			WHERE i.enabled > 0
-
-			AND (:status = 'all' OR i.status = :status)
+			WHERE i.enabled >= 1
+			AND (
+			    :status = 'all' OR
+			    LOWER(TRIM(i.status)) = LOWER(TRIM(:status)) OR
+			    (i.status LIKE CONCAT('%', :status, '%'))
+			)
 			AND (:category = 'all' OR i.category = :category)
 			AND (:location = 'all' OR i.location = :location)
-
 			AND (
 			    :keyword IS NULL OR :keyword = '' OR
 			    (:searchType = 'title' AND i.title LIKE CONCAT('%', :keyword, '%')) OR

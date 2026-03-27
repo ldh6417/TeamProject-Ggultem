@@ -113,6 +113,8 @@ public class ItemBoardAdminServiceImpl implements ItemBoardAdminService {
 		List<ItemBoardAdminDTO> dtoList = result.getContent().stream().map(itemBoard -> {
 			// 기본 매핑
 			ItemBoardAdminDTO dto = modelMapper.map(itemBoard, ItemBoardAdminDTO.class);
+			
+			dto.setStatus(itemBoard.getStatus());
 
 			// Member 정보 수동 세팅 (화면에서 item.member.nickname 등을 쓸 수 있게)
 			if (itemBoard.getMember() != null) {

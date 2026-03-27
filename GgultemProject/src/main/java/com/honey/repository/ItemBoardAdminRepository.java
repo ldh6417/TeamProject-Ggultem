@@ -19,12 +19,12 @@ public interface ItemBoardAdminRepository extends JpaRepository<ItemBoard, Long>
 			+ "(:searchType = 'title' AND i.title LIKE CONCAT('%', :keyword, '%')) OR "
 			+ "(:searchType = 'writer' AND m.nickname LIKE CONCAT('%', :keyword, '%')) OR "
 			+ "(:searchType = 'content' AND i.content LIKE CONCAT('%', :keyword, '%')) OR "
-			+ "(:searchType = 'all' AND (i.title LIKE CONCAT('%', :keyword, '%') OR m.nickname LIKE CONCAT('%', :keyword, '%'))) OR "
-			+ "(:searchType IS NULL OR :searchType = '' OR i.title LIKE CONCAT('%', :keyword, '%') OR m.nickname LIKE CONCAT('%', :keyword, '%'))"
+			+ "((:searchType = 'all' OR :searchType IS NULL OR :searchType = '') AND "
+			+ " (i.title LIKE CONCAT('%', :keyword, '%') OR m.nickname LIKE CONCAT('%', :keyword, '%')))"
+
 			+ ")")
 	Page<ItemBoard> searchByCondition(@Param("searchType") String searchType, @Param("keyword") String keyword,
-			@Param("enabled") Integer enabled, // int -> Integer
-			Pageable pageable);
+			@Param("enabled") Integer enabled, Pageable pageable);
 
 	@Query("select i from ItemBoard i where i.enabled = :enabled")
 	Page<ItemBoard> findAllByEnabled(@Param("enabled") int enabled, Pageable pageable);
