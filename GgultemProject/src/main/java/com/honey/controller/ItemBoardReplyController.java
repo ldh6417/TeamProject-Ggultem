@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.honey.dto.ItemBoardReplyDTO;
+import com.honey.dto.ItemBoardSearchDTO;
+import com.honey.dto.PageResponseDTO;
 import com.honey.service.ItemBoardReplyService;
 
 import lombok.RequiredArgsConstructor;
@@ -44,4 +46,9 @@ public class ItemBoardReplyController {
 		service.remove(replyNo);
 
 	}
+	// 관리자
+	@GetMapping("/admin/list")
+    public PageResponseDTO<ItemBoardReplyDTO> adminList(ItemBoardSearchDTO searchDTO) {
+        return service.adminList(searchDTO);
+    }
 }

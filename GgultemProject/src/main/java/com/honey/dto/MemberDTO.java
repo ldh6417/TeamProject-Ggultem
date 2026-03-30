@@ -33,7 +33,7 @@ public class MemberDTO extends User {
 	private String phone;
 	private String businessNumber; // 사업자 번호
     private String companyName;    // 상호명
-    private int bizMoney;
+    private Long bizMoney;
     private Boolean businessVerified;
 	private Integer enabled;
 	private Set<String> roleNames = new HashSet<>();

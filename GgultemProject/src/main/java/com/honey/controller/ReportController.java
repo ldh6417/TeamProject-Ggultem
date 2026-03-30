@@ -23,7 +23,7 @@ public class ReportController {
     private final ReportService reportService;
     private final CustomFileUtil fileUtil;
 
-    @PostMapping("/list")
+    @PostMapping("/register")
     public Map<String, Long> register(ReportDTO reportDTO) {
         // 1. 파일 저장 처리. 증거 스크린샷 첨부를 해도, 안 해도 되도록.
     	if (reportDTO.getFiles() != null && !reportDTO.getFiles().isEmpty()) {
@@ -35,5 +35,14 @@ public class ReportController {
         Long reportId = reportService.register(reportDTO);
 
         return Map.of("REPORT_ID", reportId);
+    }
+    
+    @org.springframework.web.bind.annotation.GetMapping("/admin/list")
+    public com.honey.dto.PageResponseDTO<ReportDTO> list(com.honey.dto.PageRequestDTO pageRequestDTO) {
+        
+        log.info("관리자 신고 목록 조회 요청: " + pageRequestDTO);
+        
+        // 서비스의 list 메서드 호출
+        return reportService.list(pageRequestDTO);
     }
 }

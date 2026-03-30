@@ -44,6 +44,7 @@ public class BusinessBoard extends BaseTimeEntity {
 	private String content;
 	private String writer;
 	private String moveUrl;
+	private boolean onOff;
 	
 	@ManyToOne(fetch = FetchType.LAZY) // 지연 로딩 권장
     @JoinColumn(name = "MEMBER_EMAIL") // DB 컬럼명
@@ -68,8 +69,8 @@ public class BusinessBoard extends BaseTimeEntity {
 	public void changePrice(int price) {
 		this.price = price;
 	}
-	public void changeCategory(String category) {
-		this.category = category;
+	public void changeMoveUrl(String moveUrl) {
+		this.moveUrl = moveUrl;
 	}
 	public void setMember(Member member) {
 		this.member = member;
@@ -80,6 +81,8 @@ public class BusinessBoard extends BaseTimeEntity {
 		
 		if(enabled == 0) {
 			this.dtdDate = now;
+			this.onOff = false;
+			this.sign = false;
 		}
 	}
 	
@@ -92,6 +95,16 @@ public class BusinessBoard extends BaseTimeEntity {
     }
 	public void setEndDate(LocalDateTime endDate) {
 		this.endDate = endDate;
+		
+		if(LocalDateTime.now().isBefore(endDate)) {
+			setOnOff(true);
+		} else {
+			setOnOff(false);
+		}
+	}
+	
+	public void setOnOff(boolean onOff) {
+		this.onOff = onOff;
 	}
 	public void addImage(BusinessItem image) {
 		image.setOrd(this.bItemList.size());

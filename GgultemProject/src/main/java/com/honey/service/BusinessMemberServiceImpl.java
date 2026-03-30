@@ -22,11 +22,15 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.honey.domain.BizMoneyHistory;
 import com.honey.domain.Member;
+import com.honey.dto.BizMoneyHistoryDTO;
 import com.honey.dto.BusinessMemberDTO;
 import com.honey.dto.MemberDTO;
 import com.honey.dto.PageResponseDTO;
 import com.honey.dto.SearchDTO;
+import com.honey.repository.BizMoneyHistoryRepository;
+import com.honey.repository.BusinessBoardRepository;
 import com.honey.repository.BusinessMemberRepository;
 import com.honey.repository.MemberRepository;
 import com.honey.util.CustomFileUtil;
@@ -45,6 +49,8 @@ public class BusinessMemberServiceImpl implements BusinessMemberService {
 	private final BusinessMemberRepository bMemberRepository;
 	private final MemberRepository memberRepository;
 	private final CustomFileUtil fileUtil;
+	private final BizMoneyHistoryRepository bizMoneyHistoryRepository;
+	private final BusinessBoardRepository businessBoardRepository;
 	
 	@Value("${com.honey.business.api.key}")
 	private String businessKey;
@@ -214,6 +220,144 @@ public class BusinessMemberServiceImpl implements BusinessMemberService {
 		//bMemberRepository.save(bMember);
 	}
 	
+	//비즈니스 회원 비즈머니 충전 로직 =============================
+	
+	@Transactional
+	@Override
+	public void chargeMoney(String email, Long amount) {
+	    Member member = memberRepository.findById(email).orElseThrow();
+	    
+	    // ✨ 기존 잔액에 충전 금액 합산
+	    long newBalance = (member.getBizMoney() != 0 ? member.getBizMoney() : 0L) + amount;
+	    member.changeBizMoney(newBalance);
+	    
+	    //비즈머니 충전 내역 log 저장
+	    BizMoneyHistory history = BizMoneyHistory.builder()
+	            .member(member)
+	            .amount(amount)
+	            .balance(newBalance)
+	            .type("CHARGE")
+	            .detail("비즈머니 충전")
+	            .build();
+	    
+	    bizMoneyHistoryRepository.save(history);
+	}
+	
+	//비즈니스 회원 광고 상품 클릭당비용(CPC) 과금 로직 ================
+	@Transactional
+	public void spendMoneyByClick(String email, Long cpcAmount, String productName) {
+	    Member member = memberRepository.findById(email).orElseThrow();
+	    
+	    long currentMoney = member.getBizMoney();
+	    if (currentMoney < cpcAmount) {
+	        // 잔액 부족 시 광고 중단 로직 등을 추가할 수 있음
+	        throw new RuntimeException("비즈머니가 부족합니다.");
+	    }
+
+	    long nextMoney = currentMoney - cpcAmount;
+	    member.changeBizMoney(nextMoney);
+
+	    BizMoneyHistory history = BizMoneyHistory.builder()
+	            .member(member)
+	            .amount(-cpcAmount) // 지출은 마이너스!
+	            .balance(nextMoney)
+	            .type("SPEND")
+	            .detail("[" + productName + "] 광고 클릭 지출")
+	            .build();
+
+	    bizMoneyHistoryRepository.save(history);
+	}
+
+	@Override
+	public PageResponseDTO<BizMoneyHistoryDTO> getBizMoneyHistory(SearchDTO searchDTO, String email) {
+		Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize(),
+				Sort.by("regDate").descending());
+		
+		Page<BizMoneyHistory> result = null;
+		if (searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) {
+
+			if (searchDTO.getState() != null) {
+				result = bizMoneyHistoryRepository.searchByConditionStateFilter(searchDTO.getSearchType(), searchDTO.getKeyword(),
+						searchDTO.getState(),
+						pageable, email);
+			} else {
+				result = bizMoneyHistoryRepository.searchByConditionAllFilter(searchDTO.getSearchType(), searchDTO.getKeyword(),
+						pageable, email);
+			}
+
+		} else if (searchDTO.getState() != null) {
+			result = bizMoneyHistoryRepository.findAllBizMoneyAllFilter(pageable, searchDTO.getState(), email);
+		} else {
+			result = bizMoneyHistoryRepository.findAllBizMoney(pageable, email);
+		}
+
+		List<BizMoneyHistoryDTO> dtoList = result.getContent().stream().map(bizMoneyHistory -> {
+			BizMoneyHistoryDTO dto = modelMapper.map(bizMoneyHistory, BizMoneyHistoryDTO.class);
+			
+			return dto;
+		}).collect(Collectors.toList());
+
+		return PageResponseDTO.<BizMoneyHistoryDTO>withAll().dtoList(dtoList).pageRequestDTO(searchDTO)
+				.totalCount(result.getTotalElements()).build();
+	}
+
+	@Override
+	public Long getTodaySpend(String email) {
+	    java.time.LocalDateTime startOfToday = java.time.LocalDate.now().atStartOfDay();
+	    
+		return bizMoneyHistoryRepository.getTodaySpend(email, startOfToday);
+	}
+
+	@Override
+	public Long getTotalSpend(String email) {
+		return bizMoneyHistoryRepository.getTotalSpend(email);
+	}
+	
+	@Override
+	public Integer getTodayViewCount(String email) {
+		java.time.LocalDateTime startOfToday = java.time.LocalDate.now().atStartOfDay();
+		
+		return businessBoardRepository.getTodayClick(email, startOfToday);
+	}
+	
+	
+	@Override
+	public Integer getTotalViewCount(String email) {
+		return businessBoardRepository.getTotalClick(email);
+	}
+
+	@Override
+	public PageResponseDTO<BizMoneyHistoryDTO> getBizMoneyHistoryAdmin(SearchDTO searchDTO) {
+		Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize(),
+				Sort.by("regDate").descending());
+		
+		Page<BizMoneyHistory> result = null;
+		if (searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) {
+
+			if (searchDTO.getState() != null) {
+				result = bizMoneyHistoryRepository.searchByConditionStateFilterAdmin(searchDTO.getSearchType(), searchDTO.getKeyword(),
+						searchDTO.getState(),
+						pageable);
+			} else {
+				result = bizMoneyHistoryRepository.searchByConditionAllFilterAdmin(searchDTO.getSearchType(), searchDTO.getKeyword(),
+						pageable);
+			}
+
+		} else if (searchDTO.getState() != null) {
+			result = bizMoneyHistoryRepository.findAllBizMoneyAllFilterAdmin(pageable, searchDTO.getState());
+		} else {
+			result = bizMoneyHistoryRepository.findAllBizMoneyAdmin(pageable);
+		}
+
+		List<BizMoneyHistoryDTO> dtoList = result.getContent().stream().map(bizMoneyHistory -> {
+			BizMoneyHistoryDTO dto = modelMapper.map(bizMoneyHistory, BizMoneyHistoryDTO.class);
+			
+			return dto;
+		}).collect(Collectors.toList());
+
+		return PageResponseDTO.<BizMoneyHistoryDTO>withAll().dtoList(dtoList).pageRequestDTO(searchDTO)
+				.totalCount(result.getTotalElements()).build();
+	}
 	
 
 }

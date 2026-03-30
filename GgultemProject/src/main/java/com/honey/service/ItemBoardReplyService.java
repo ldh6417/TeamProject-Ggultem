@@ -3,6 +3,8 @@ package com.honey.service;
 import java.util.List;
 
 import com.honey.dto.ItemBoardReplyDTO;
+import com.honey.dto.ItemBoardSearchDTO;
+import com.honey.dto.PageResponseDTO;
 
 public interface ItemBoardReplyService {
 
@@ -13,5 +15,8 @@ public interface ItemBoardReplyService {
 	public void modify(ItemBoardReplyDTO dto);
 
 	public void remove(Long replyNo);
+	
+	// 관리자
+	PageResponseDTO<ItemBoardReplyDTO> adminList(ItemBoardSearchDTO searchDTO);
 
 }

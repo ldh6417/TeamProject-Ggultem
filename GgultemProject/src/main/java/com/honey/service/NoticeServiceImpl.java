@@ -107,33 +107,34 @@ public class NoticeServiceImpl implements NoticeService {
 	    notice.changeContent(noticeDTO.getContent());
 	    notice.changePinned(noticeDTO.getIsPinned());
 
-	    // 3. 이미지 처리 로직 (핵심!)
-	    List<MultipartFile> files = noticeDTO.getFiles();
+	 // 3. 이미지 처리 로직 (수정)
 
-	    // 새 파일이 업로드된 경우에만 기존 이미지를 지우고 새로 등록합니다.
-	    if (files != null && !files.isEmpty() && !files.get(0).isEmpty()) {
-	        
-	        // (1) 물리적 파일 삭제 (CustomFileUtil 활용)
-	        List<String> oldFileNames = notice.getNoticeImage().stream()
-	                .map(img -> img.getFileName())
-	                .collect(Collectors.toList());
-	        if (oldFileNames != null && !oldFileNames.isEmpty()) {
-	            fileUtil.deleteFiles(oldFileNames);
-	        }
+	 // 1. 삭제할 파일만 삭제
+	 List<String> delFileNames = noticeDTO.getDelFileNames();
+	 if (delFileNames != null && !delFileNames.isEmpty()) {
 
-	        // (2) DB 리스트 비우기
-	        notice.clearList();
+	     // (1) 물리 파일 삭제
+	     fileUtil.deleteFiles(delFileNames);
 
-	        // (3) 새 파일 저장 및 이름 추가
-	        List<String> newFileNames = fileUtil.saveFiles(files);
-	        if (newFileNames != null && !newFileNames.isEmpty()) {
-	            newFileNames.forEach(notice::addImageString);
-	        }
-	    } 
-	    // 만약 새 파일이 없다면 아무 것도 하지 않음. (기존 데이터 유지)
+	     // (2) DB에서도 해당 파일만 제거
+	     notice.getNoticeImage().removeIf(
+	         img -> delFileNames.contains(img.getFileName())
+	     );
+	 }
 
-	    // 4. 저장
-	    noticeRepository.save(notice);
+	 // 2. 새 파일 추가
+	 List<MultipartFile> files = noticeDTO.getFiles();
+	 if (files != null && !files.isEmpty() && !files.get(0).isEmpty()) {
+
+	     List<String> newFileNames = fileUtil.saveFiles(files);
+
+	     if (newFileNames != null && !newFileNames.isEmpty()) {
+	         newFileNames.forEach(notice::addImageString);
+	     }
+	 }
+
+	 // 4. 저장
+	 noticeRepository.save(notice);
 	}
 
 	@Override

@@ -12,4 +12,6 @@ public interface ReportService {
     PageResponseDTO<ReportDTO> list(PageRequestDTO pageRequestDTO);
     
     
+    ReportDTO read(Long reportId);
+    
 }

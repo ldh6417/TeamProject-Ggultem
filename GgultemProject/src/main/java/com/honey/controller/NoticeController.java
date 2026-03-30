@@ -27,7 +27,6 @@ import lombok.extern.log4j.Log4j2;
 @RestController
 @RequiredArgsConstructor
 @Log4j2
-
 @RequestMapping("/admin/notice")
 public class NoticeController {
 	
@@ -62,16 +61,18 @@ public class NoticeController {
 		return service.list(searchDTO);
 	}
 	
+	// 🔥 수정된 부분 (파일 처리 제거)
 	@PutMapping("/{noticeId}")
-	public Map<String, String> modify(@PathVariable(name="noticeId") Long noticeId, NoticeDTO noticeDTO){
-		List<MultipartFile> files = noticeDTO.getFiles();
-        List<String> uploadFileNames = fileUtil.saveFiles(files);
-        
-		noticeDTO.setUploadFileNames(uploadFileNames);
-		noticeDTO.setNoticeId(noticeId);
+	public Map<String, String> modify(
+	        @PathVariable(name="noticeId") Long noticeId,
+	        NoticeDTO noticeDTO){
+
+	    // 파일 저장 로직 제거 (Service에서 처리하도록 위임)
+	    noticeDTO.setNoticeId(noticeId);
 		
-		service.modify(noticeDTO);
-		return Map.of("RESULT", "SUCCESS");
+	    service.modify(noticeDTO);
+
+	    return Map.of("RESULT", "SUCCESS");
 	}
 	
 	@PutMapping("/remove/{noticeId}")

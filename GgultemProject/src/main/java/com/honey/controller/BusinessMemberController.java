@@ -1,15 +1,18 @@
 package com.honey.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.honey.dto.BizMoneyHistoryDTO;
 import com.honey.dto.BusinessMemberRegisterDTO;
 import com.honey.dto.MemberDTO;
 import com.honey.dto.PageResponseDTO;
@@ -87,6 +90,58 @@ public class BusinessMemberController {
 		}
 		
 		return businessService.list(searchDTO);
+	}
+	
+	@PutMapping("/charge/{email}")
+	public void chargeMoney(@PathVariable(name = "email") String email, Long amount) {
+		businessService.chargeMoney(email, amount);
+	}
+	
+	@GetMapping("/history/{email}")
+	public PageResponseDTO<BizMoneyHistoryDTO> bizMoneyHistory(SearchDTO searchDTO, @PathVariable(name = "email") String email) {
+		
+		log.info("내가받은 서치디티오 값 : "+searchDTO);
+		
+		if("all".equals(searchDTO.getState())) {
+			searchDTO.setState(null);
+		}
+		
+		return businessService.getBizMoneyHistory(searchDTO, email);	
+	}
+	
+	@GetMapping("/admin/history")
+	public PageResponseDTO<BizMoneyHistoryDTO> bizMoneyHistoryAdmin(SearchDTO searchDTO) {
+		
+		if("all".equals(searchDTO.getState())) {
+			searchDTO.setState(null);
+		}
+		
+		return businessService.getBizMoneyHistoryAdmin(searchDTO);	
+	}
+	
+	@PutMapping("/spend/{email}")
+	public void spendMoneyByClick(@PathVariable(name = "email") String email, Long amount, String title) {
+		businessService.spendMoneyByClick(email, amount, title);
+	}
+	
+	@GetMapping("/todaySpend/{email}")
+	public Long getTodaySpend(@PathVariable(name = "email") String email) {
+		return businessService.getTodaySpend(email);
+	}
+	
+	@GetMapping("/totalSpend/{email}")
+	public Long getTotalSpend(@PathVariable(name = "email") String email) {
+		return businessService.getTotalSpend(email);
+	}
+	
+	@GetMapping("/todayClick/{email}")
+	public Integer getTodayViewCount(@PathVariable(name = "email") String email) {
+		return businessService.getTodayViewCount(email);
+	}
+	
+	@GetMapping("/totalClick/{email}")
+	public Integer getTotalViewCount(@PathVariable(name = "email") String email) {
+		return businessService.getTotalViewCount(email);
 	}
 	
 }

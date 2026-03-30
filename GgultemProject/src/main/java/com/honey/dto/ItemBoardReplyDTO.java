@@ -20,14 +20,17 @@ public class ItemBoardReplyDTO {
 
 	private Long replyNo;
 	private Long itemId;
-	private String email;
+	private String itemTitle;
 	private String content;
+	
+	private String email;
+	private String nickname;
 	private Long parentReplyNo;
 	
 	@Builder.Default
 	private List<ItemBoardReplyDTO> childList = new ArrayList<>();
 	
-	private int enabled;
+	private Integer enabled;
 	
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")

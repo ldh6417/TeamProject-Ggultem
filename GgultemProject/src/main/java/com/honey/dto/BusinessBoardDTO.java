@@ -31,6 +31,7 @@ public class BusinessBoardDTO {
 	private Integer enabled;
 	private Boolean sign;
 	private String moveUrl;
+	private Boolean onOff;
 	
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private LocalDateTime regDate;
@@ -38,8 +39,9 @@ public class BusinessBoardDTO {
 	private LocalDateTime updDate;
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private LocalDateTime dtdDate;
-	
-	private String endDate;
+	@DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+	private LocalDateTime endDate;
 	
 	@Builder.Default
 	private List<MultipartFile> files = new ArrayList<>();

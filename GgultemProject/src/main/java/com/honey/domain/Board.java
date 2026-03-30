@@ -47,6 +47,9 @@ public class Board extends BaseTimeEntity {
 	@Column(columnDefinition = "CLOB")
 	private String content;
 	
+	@Column(name = "content_text", length = 2000)
+	private String contentText;
+	
 	private int viewCount;
 	
 	@Builder.Default
@@ -103,6 +106,10 @@ public class Board extends BaseTimeEntity {
 
 	public void changeContent(String content) {
 	    this.content = content;
+	}
+	
+	public void changeContentText(String contentText) {
+	    this.contentText = contentText;
 	}
 
 	public void setContent(String content) {

@@ -28,6 +28,7 @@ public class NoticeDTO {
     private String memberEmail;
     private Integer viewCount;
     private int isPinned;
+    private List<String> delFileNames;
 	
 	
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")

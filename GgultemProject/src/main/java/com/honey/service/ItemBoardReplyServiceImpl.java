@@ -5,12 +5,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.honey.domain.ItemBoard;
 import com.honey.domain.ItemBoardReply;
 import com.honey.domain.Member;
 import com.honey.dto.ItemBoardReplyDTO;
+import com.honey.dto.ItemBoardSearchDTO;
+import com.honey.dto.PageResponseDTO;
 import com.honey.repository.ItemBoardReplyRepository;
 import com.honey.repository.ItemBoardRepository;
 import com.honey.repository.MemberRepository;
@@ -36,8 +42,9 @@ public class ItemBoardReplyServiceImpl implements ItemBoardReplyService {
 				.map(reply -> ItemBoardReplyDTO.builder().replyNo(reply.getReplyNo())
 						.itemId(reply.getItemBoard().getId()).email(reply.getMember().getEmail())
 						.content(reply.getContent())
-						.parentReplyNo(reply.getParent() != null ? reply.getParent().getReplyNo() : null).enabled(1)
-						.build())
+						.regDate(reply.getRegDate())
+						.parentReplyNo(reply.getParent() != null ? reply.getParent().getReplyNo() : null).enabled(reply.getEnabled())
+						.itemTitle(reply.getItemBoard().getTitle()).nickname(reply.getMember().getNickname()).build())
 				.collect(Collectors.toMap(ItemBoardReplyDTO::getReplyNo, dto -> dto));
 
 		List<ItemBoardReplyDTO> result = new ArrayList<>();
@@ -55,6 +62,46 @@ public class ItemBoardReplyServiceImpl implements ItemBoardReplyService {
 		}
 
 		return result;
+	}
+
+	// 2. [추가] 관리자용: 전체 댓글을 페이징/검색해서 보여주는 평면 리스트
+	@Override
+	public PageResponseDTO<ItemBoardReplyDTO> adminList(ItemBoardSearchDTO searchDTO) {
+
+	    // 1. 페이징 설정
+	    Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize(),
+	            Sort.by("replyNo").descending());
+
+	    // 2. 검색어 처리 (빈 문자열이면 null로 처리해서 쿼리에서 무시되게 함)
+	    String keyword = (searchDTO.getKeyword() != null && !searchDTO.getKeyword().trim().isEmpty()) 
+	                     ? searchDTO.getKeyword() : null;
+	    String searchType = (searchDTO.getSearchType() != null) ? searchDTO.getSearchType() : "all";
+	    Integer enabled = searchDTO.getEnabled(); // null이면 전체보기
+
+	    // 3. 레포지토리 호출 (파라미터 순서 주의!)
+	    Page<ItemBoardReply> result = itemBoardReplyRepository.searchAdminReplyList(
+	            enabled, searchType, keyword, pageable);
+
+	    // 4. DTO 변환 (regDate는 댓글의 날짜인 r.getRegDate()로 변경!)
+	    List<ItemBoardReplyDTO> dtoList = result.getContent().stream()
+	            .map(reply -> ItemBoardReplyDTO.builder()
+	                    .replyNo(reply.getReplyNo())
+	                    .itemId(reply.getItemBoard().getId())
+	                    .itemTitle(reply.getItemBoard().getTitle())
+	                    .email(reply.getMember().getEmail())
+	                    .nickname(reply.getMember().getNickname())
+	                    .content(reply.getContent())
+	                    .regDate(reply.getRegDate()) // 👈 상품 날짜가 아닌 댓글 날짜!
+	                    .parentReplyNo(reply.getParent() != null ? reply.getParent().getReplyNo() : null)
+	                    .enabled(reply.getEnabled())
+	                    .build())
+	            .collect(Collectors.toList());
+
+	    return PageResponseDTO.<ItemBoardReplyDTO>withAll()
+	            .pageRequestDTO(searchDTO)
+	            .dtoList(dtoList)
+	            .totalCount((int) result.getTotalElements())
+	            .build();
 	}
 
 	@Override

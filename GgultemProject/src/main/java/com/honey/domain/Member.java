@@ -51,7 +51,7 @@ public class Member extends BaseTimeEntity {
 	private String businessNumber; // 사업자 번호
     private String companyName;    // 상호명
     private boolean businessVerified; // 인증 여부
-    private int bizMoney;
+    private long bizMoney;
 	
 	private Integer enabled;
 	private LocalDateTime dtdDate; // 삭제일
@@ -146,6 +146,10 @@ public class Member extends BaseTimeEntity {
 
 	public void clearList() {
 		this.thumbnailList.clear();
+	}
+
+	public void changeBizMoney(long newBalance) {
+		this.bizMoney = newBalance;
 	}
 
 	

@@ -40,29 +40,42 @@ public class BoardReplyServiceImpl implements BoardReplyService {
                 .email(dto.getEmail())
                 .build();
 
+        BoardReply parent = null;
+
+        if (dto.getParentReplyNo() != null) {
+            parent = boardReplyRepository.findById(dto.getParentReplyNo())
+                    .orElse(null);
+        }
+
         BoardReply reply = BoardReply.builder()
                 .board(board)
                 .member(member)
                 .content(dto.getContent())
                 .enabled(1)
+                .parent(parent)   
                 .build();
 
         return boardReplyRepository.save(reply).getReplyNo();
     }
-
     ///////////////////
     /// 댓글 목록
     ///////////////////
     @Override
     public List<BoardReplyDTO> list(Integer boardNo) {
 
-        return boardReplyRepository.findByBoardBoardNo(boardNo).stream()
+    	return boardReplyRepository.findByBoardBoardNo(boardNo).stream()
                 .map(reply -> BoardReplyDTO.builder()
                         .replyNo(reply.getReplyNo())
                         .boardNo(reply.getBoard().getBoardNo())
                         .email(reply.getMember().getEmail())
                         .content(reply.getContent())
+                        .writer(reply.getMember().getNickname())
                         .enabled(reply.getEnabled())
+                        .parentReplyNo(
+                            reply.getParent() != null 
+                                ? reply.getParent().getReplyNo() 
+                                : null
+                        ) 
                         .build())
                 .toList();
     }
@@ -76,7 +89,6 @@ public class BoardReplyServiceImpl implements BoardReplyService {
         BoardReply reply = boardReplyRepository.findById(dto.getReplyNo())
                 .orElseThrow(() -> new RuntimeException("댓글 없음"));
 
-        // Entity 방식대로 수정
         if (dto.getContent() != null && !dto.getContent().isEmpty()) {
             reply.changeContent(dto.getContent());
         }
@@ -106,15 +118,19 @@ public class BoardReplyServiceImpl implements BoardReplyService {
                 Sort.by("replyNo").descending()
         );
 
+        // 🔥 keyword 처리
         String keyword = searchDTO.getKeyword();
-        Integer enabled = Integer.parseInt(searchDTO.getEnabled());
-
-        // 🔥 빈값 방어 (이거 중요)
         if (keyword != null && keyword.trim().isEmpty()) {
             keyword = null;
         }
 
-        // 🔥 이제 이거 한줄로 끝
+        // 🔥 enabled null 방어 (핵심 수정)
+        Integer enabled = null;
+        if (searchDTO.getEnabled() != null && !searchDTO.getEnabled().isEmpty()) {
+            enabled = Integer.parseInt(searchDTO.getEnabled());
+        }
+
+        // 🔥 검색 실행
         Page<BoardReply> result =
                 boardReplyRepository.searchAll(enabled, keyword, pageable);
 
@@ -123,6 +139,7 @@ public class BoardReplyServiceImpl implements BoardReplyService {
                         .replyNo(reply.getReplyNo())
                         .boardNo(reply.getBoard().getBoardNo())
                         .email(reply.getMember().getEmail())
+                        .writer(reply.getMember().getNickname()) 
                         .content(reply.getContent())
                         .enabled(reply.getEnabled())
                         .build())

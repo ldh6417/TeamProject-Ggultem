@@ -22,6 +22,8 @@ public class BoardReplyDTO {
 	private Integer boardNo;
 	// 회원이메일
 	private String email;
+	// 회원 작성자
+	 private String writer;
 	// 댓글내용
 	private String content;
 	// 대댓글 번호
