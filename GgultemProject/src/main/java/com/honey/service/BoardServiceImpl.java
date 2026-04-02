@@ -117,38 +117,27 @@ public class BoardServiceImpl implements BoardService {
 
 		Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize());
 
-		Page<Board> result;
-
 		String keyword = searchDTO.getKeyword();
+		String searchType = searchDTO.getSearchType();
 
-		// =========================
-		// 검색 or 전체
-		// =========================
-		if (keyword != null && !keyword.trim().isEmpty()) {
-
-			result = boardRepository.searchByCondition(searchDTO.getSearchType(), keyword, pageable);
-
-		} else {
-
-			// keyword 없으면 그냥 전체 조회
-			result = boardRepository.searchByCondition("all", "", pageable);
+		if (keyword != null) {
+			keyword = keyword.trim();
 		}
 
-		// =========================
-		// DTO 변환
-		// =========================
-		List<BoardDTO> dtoList = result.getContent().stream().map(board -> {
+		if (keyword != null && keyword.isEmpty()) {
+			keyword = null;
+		}
+
+		Page<Object[]> result = boardRepository.searchByCondition(searchType, keyword, pageable);
+
+		List<BoardDTO> dtoList = result.getContent().stream().map(arr -> {
+
+			Board board = (Board) arr[0];
+			Long replyCount = (Long) arr[1];
 
 			BoardDTO dto = modelMapper.map(board, BoardDTO.class);
 
-			// 댓글 수 따로 조회 (중요)
-			int replyCount = boardReplyRepository.countByBoardAndEnabled(board, 1);
-			dto.setReplyCount(replyCount);
-
-			// 파일 처리
-			List<String> fileNames = board.getBoardImage().stream().map(img -> img.getFileName()).toList();
-
-			dto.setUploadFileNames(fileNames);
+			dto.setReplyCount(replyCount.intValue());
 
 			return dto;
 
@@ -168,7 +157,12 @@ public class BoardServiceImpl implements BoardService {
 				Sort.by("boardNo").descending());
 
 		String keyword = searchDTO.getKeyword();
-		if (keyword != null && keyword.trim().isEmpty()) {
+
+		if (keyword != null) {
+			keyword = keyword.trim();
+		}
+
+		if (keyword == null || keyword.isEmpty()) {
 			keyword = null;
 		}
 

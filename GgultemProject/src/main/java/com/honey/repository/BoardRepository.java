@@ -11,10 +11,8 @@ import com.honey.domain.Board;
 public interface BoardRepository extends JpaRepository<Board, Integer> {
 
 	// =========================
-	// 일반 사용자
+	// 일반 사용자 - 검색 + 전체 통합
 	// =========================
-
-	// 전체 조회 (댓글수 포함)
 	@Query("""
 			    SELECT b,
 			           (SELECT COUNT(r)
@@ -22,32 +20,26 @@ public interface BoardRepository extends JpaRepository<Board, Integer> {
 			            WHERE r.board = b AND r.enabled = 1)
 			    FROM Board b
 			    WHERE b.enabled = 1
-			    ORDER BY b.boardNo DESC
-			""")
-	Page<Object[]> findAllActive(Pageable pageable);
-
-	// 검색
-	@Query("""
-			    SELECT b FROM Board b
-			    WHERE b.enabled = 1
 			    AND (
 			        :keyword IS NULL OR :keyword = ''
 			        OR (
-			            (:searchType = 'title' AND b.title LIKE %:keyword%)
-			            OR (:searchType = 'writer' AND b.writer LIKE %:keyword%)
-			            OR (:searchType = 'content' AND b.contentText LIKE %:keyword%)
-			            OR (:searchType = 'all' AND (
-			                b.title LIKE %:keyword% OR
-			                b.writer LIKE %:keyword% OR
-			                b.contentText LIKE %:keyword%
-			            ))
+			            (:searchType = 'title' AND b.title LIKE CONCAT('%', :keyword, '%'))
+			            OR (:searchType = 'writer' AND b.writer LIKE CONCAT('%', :keyword, '%'))
+			            OR (:searchType = 'content' AND b.contentText LIKE CONCAT('%', :keyword, '%'))
+			            OR (
+			                (:searchType = 'all' OR :searchType IS NULL OR :searchType = '')
+			                AND (
+			                    b.title LIKE CONCAT('%', :keyword, '%')
+			                    OR b.writer LIKE CONCAT('%', :keyword, '%')
+			                    OR b.contentText LIKE CONCAT('%', :keyword, '%')
+			                )
+			            )
 			        )
 			    )
 			    ORDER BY b.boardNo DESC
 			""")
-	Page<Board> searchByCondition(@Param("searchType") String searchType, @Param("keyword") String keyword,
+	Page<Object[]> searchByCondition(@Param("searchType") String searchType, @Param("keyword") String keyword,
 			Pageable pageable);
-
 	// =========================
 	// 관리자
 	// =========================
