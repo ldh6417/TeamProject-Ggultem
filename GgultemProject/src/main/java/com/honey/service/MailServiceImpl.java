@@ -33,12 +33,12 @@ public class MailServiceImpl implements MailService {
         try {
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, false, "UTF-8");
             helper.setTo(email);
-            helper.setSubject("[꿀템] 회원가입 인증번호 안내 🍯");
+            helper.setSubject("[꿀템] 인증번호 안내 🍯");
             
             // HTML 형식으로 메일 보내기
             String content = "<div style='margin:20px; border:1px solid #ffca28; padding:20px; border-radius:10px;'>"
                     + "<h2>안녕하세요, 꿀템입니다!</h2>"
-                    + "<p>아래 인증번호를 회원가입 창에 입력해주세요.</p>"
+                    + "<p>아래 인증번호를 입력해주세요.</p>"
                     + "<div style='background:#fff9c4; padding:10px; font-size:24px; font-weight:bold; text-align:center;'>"
                     + authCode
                     + "</div>"

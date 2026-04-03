@@ -127,8 +127,14 @@ public class MemberServiceImpl implements MemberService {
 		} else {
 			log.info("비밀번호 변경 없이 기존 정보를 유지합니다.");
 		}
-		member.changePhone(memberDTO.getPhone());
-		member.changeNickName(memberDTO.getNickname());
+		
+		if(memberDTO.getPhone() != null) {
+			member.changePhone(memberDTO.getPhone());
+		}
+		
+		if(memberDTO.getNickname() != null) {
+			member.changeNickName(memberDTO.getNickname());
+		}
 
 		log.info("수정된 데이터 =" + member.toString());
 

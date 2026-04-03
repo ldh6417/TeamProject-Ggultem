@@ -112,5 +112,12 @@ public class MemberController {
 		boolean isAvailable = !service.existsByNickname(nickname); 
 		return Map.of("result", isAvailable);
 	}
+	
+	@PutMapping("/resetPw")
+	public Map<String, Object> resetPw(MemberDTO memberDTO) {
+		log.info(memberDTO);
+		service.modify(memberDTO);
+		return Map.of("result", true, "message", "비밀번호 변경 완료");
+	}
 
 }

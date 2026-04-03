@@ -38,7 +38,7 @@ public class MailController {
             redisUtil.deleteData(email); // 인증 성공 시 Redis 데이터 삭제 (깔끔하게! 🍯)
             return Map.of("result", true, "message", "인증에 성공했습니다.");
         } else {
-            return Map.of("result", false, "message", "인증번호가 일c치하지 않거나 만료되었습니다.");
+            return Map.of("result", false, "message", "인증번호가 일치하지 않거나 만료되었습니다.");
         }
     }
 }
