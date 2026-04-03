@@ -57,9 +57,6 @@ public class BusinessMemberServiceImpl implements BusinessMemberService {
 	@Value("${com.honey.business.api.key}")
 	private String businessKey;
 	
-	@Value("${com.honey.business.api.toss.key}")
-	private String tossKey;
-	
 	@Override
 	public MemberDTO get(String email) {
 		Member member = memberRepository.findById(email).orElseThrow(() -> new RuntimeException("해당 회원을 찾을 수 없습니다."));
