@@ -20,11 +20,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.ToString;
 
 @Entity
-@Table(name = "board") // DB테이블 이름
+@Table(name = "board")
 @SequenceGenerator(name = "BOARD_SEQ_GEN", sequenceName = "BOARD_SEQ1", initialValue = 1, allocationSize = 1)
 @Getter
 @ToString
@@ -32,32 +31,67 @@ import lombok.ToString;
 @NoArgsConstructor
 @Builder
 public class Board extends BaseTimeEntity {
+
+	// PK
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "BOARD_SEQ_GEN")
 	@Column(name = "BOARD_NO")
 	private int boardNo;
 
+	// 작성자 (회원)
 	@ManyToOne
-	@JoinColumn(name = "member_email") // 실제 DB 테이블의 FK 컬럼명을 지정
+	@JoinColumn(name = "member_email")
 	private Member member;
 
 	private String title;
 	private String writer;
-	
+
+	// HTML 내용
 	@Column(columnDefinition = "CLOB")
 	private String content;
-	
+
+	// 검색용 텍스트
 	@Column(name = "content_text", length = 2000)
 	private String contentText;
-	
-	private int viewCount;
-	
-	@Builder.Default
-	private Integer enabled = 1; // 1: 활성화 / 0:삭제
 
+	// 조회수
+	private int viewCount;
+
+	// 논리 삭제
+	@Builder.Default
+	private Integer enabled = 1;
+
+	// 이미지 리스트
 	@ElementCollection
 	@Builder.Default
 	private List<BoardImage> boardImage = new ArrayList<>();
+
+	// 삭제 날짜
+	private LocalDateTime dtdDate;
+
+	public void changeTitle(String title) {
+		this.title = title;
+	}
+
+	public void increaseViewCount() {
+		this.viewCount++;
+	}
+
+	public void changeEnabled(int enabled) {
+		this.enabled = enabled;
+
+		if (enabled == 1) {
+			this.dtdDate = null;
+		} else {
+			this.dtdDate = LocalDateTime.now();
+		}
+	}
+
+	// (HTML + TEXT 같이 처리)
+	public void changeContent(String content) {
+		this.content = content;
+		this.contentText = content.replaceAll("<[^>]*>", "").replaceAll("&nbsp;", " ").trim();
+	}
 
 	public void addImage(BoardImage board) {
 		board.setOrd(this.boardImage.size());
@@ -72,48 +106,4 @@ public class Board extends BaseTimeEntity {
 	public void clearList() {
 		this.boardImage.clear();
 	}
-
-	private LocalDateTime dtdDate;
-
-	public void changeTitle(String title) {
-		this.title = title;
-	}
-
-	public void changeWriter(String writer) {
-		this.writer = writer;
-	}
-
-	public void changeViewCount(int viewCount) {
-		this.viewCount = viewCount;
-	}
-
-	public void changeMember(Member member) {
-		this.member = member;
-
-	}
-
-	public void changeEnabled(int enabled) {
-		this.enabled = enabled;
-		switch (enabled) {
-		case 1:
-			this.dtdDate = null;
-			break;
-		case 0:
-			this.dtdDate = LocalDateTime.now();
-			break;
-		}
-	}
-
-	public void changeContent(String content) {
-	    this.content = content;
-	}
-	
-	public void changeContentText(String contentText) {
-	    this.contentText = contentText;
-	}
-
-	public void setContent(String content) {
-    this.content = content;
-}
-
 }

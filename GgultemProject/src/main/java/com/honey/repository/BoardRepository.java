@@ -11,7 +11,7 @@ import com.honey.domain.Board;
 public interface BoardRepository extends JpaRepository<Board, Integer> {
 
 	// =========================
-	// 일반 사용자 - 검색 + 전체 통합
+	// 일반 사용자 검색 
 	// =========================
 	@Query("""
 			    SELECT b,
@@ -44,7 +44,7 @@ public interface BoardRepository extends JpaRepository<Board, Integer> {
 	// 관리자
 	// =========================
 
-	// 관리자 전체 조회 (댓글수 포함)
+	// 관리자 전체 조회
 	@Query("""
 			    SELECT b,
 			           (SELECT COUNT(r)
@@ -55,7 +55,7 @@ public interface BoardRepository extends JpaRepository<Board, Integer> {
 			""")
 	Page<Object[]> findAllAdmin(Pageable pageable);
 
-	// 관리자 검색 (댓글수 포함)
+	// 관리자 검색
 	@Query("""
 			    SELECT b,
 			           (SELECT COUNT(r)

@@ -1,7 +1,6 @@
 package com.honey.service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -15,7 +14,6 @@ import com.honey.domain.Member;
 import com.honey.dto.BoardDTO;
 import com.honey.dto.PageResponseDTO;
 import com.honey.dto.SearchDTO;
-import com.honey.repository.BoardReplyRepository;
 import com.honey.repository.BoardRepository;
 import com.honey.repository.MemberRepository;
 
@@ -30,17 +28,6 @@ public class BoardServiceImpl implements BoardService {
 	private final ModelMapper modelMapper;
 	private final BoardRepository boardRepository;
 	private final MemberRepository memberRepository;
-	private final BoardReplyRepository boardReplyRepository;
-
-	///////////////////
-	/// HTML 제거 코드
-	///////////////////
-	private String extractText(String html) {
-		if (html == null)
-			return null;
-
-		return html.replaceAll("<[^>]*>", "").replaceAll("&nbsp;", " ").trim();
-	}
 
 	///////////////////
 	/// 게시글 등록
@@ -50,10 +37,11 @@ public class BoardServiceImpl implements BoardService {
 
 		Member member = memberRepository.findById(boardDTO.getEmail()).orElseThrow(() -> new RuntimeException("회원 없음"));
 
-		String text = extractText(boardDTO.getContent());
+		Board board = Board.builder().title(boardDTO.getTitle()).writer(member.getNickname()).viewCount(0).enabled(1)
+				.member(member).build();
 
-		Board board = Board.builder().title(boardDTO.getTitle()).writer(member.getNickname())
-				.content(boardDTO.getContent()).contentText(text).viewCount(0).enabled(1).member(member).build();
+		//  content + contentText 같이 처리
+		board.changeContent(boardDTO.getContent());
 
 		return boardRepository.save(board).getBoardNo();
 	}
@@ -66,7 +54,8 @@ public class BoardServiceImpl implements BoardService {
 
 		Board board = boardRepository.findById(boardNo).orElseThrow(() -> new RuntimeException("게시글 없음"));
 
-		board.changeViewCount(board.getViewCount() + 1);
+		// ⭐ 조회수 증가
+		board.increaseViewCount();
 
 		BoardDTO dto = modelMapper.map(board, BoardDTO.class);
 
@@ -91,10 +80,8 @@ public class BoardServiceImpl implements BoardService {
 
 		if (boardDTO.getContent() != null && !boardDTO.getContent().isEmpty()) {
 
-			board.setContent(boardDTO.getContent());
-
-			String text = extractText(boardDTO.getContent());
-			board.changeContentText(text);
+			
+			board.changeContent(boardDTO.getContent());
 		}
 	}
 
@@ -109,9 +96,9 @@ public class BoardServiceImpl implements BoardService {
 		board.changeEnabled(0);
 	}
 
-///////////////////
-//게시글 목록 (일반 사용자)
-///////////////////
+	///////////////////
+	/// 게시글 목록
+	///////////////////
 	@Override
 	public PageResponseDTO<BoardDTO> list(SearchDTO searchDTO) {
 
@@ -136,7 +123,6 @@ public class BoardServiceImpl implements BoardService {
 			Long replyCount = (Long) arr[1];
 
 			BoardDTO dto = modelMapper.map(board, BoardDTO.class);
-
 			dto.setReplyCount(replyCount.intValue());
 
 			return dto;
@@ -147,9 +133,9 @@ public class BoardServiceImpl implements BoardService {
 				.pageRequestDTO(searchDTO).build();
 	}
 
-///////////////////
-//관리자 게시글 목록
-///////////////////
+	///////////////////
+	/// 관리자 게시글 목록
+	///////////////////
 	@Override
 	public PageResponseDTO<BoardDTO> adminList(SearchDTO searchDTO) {
 
@@ -167,6 +153,7 @@ public class BoardServiceImpl implements BoardService {
 		}
 
 		Integer enabled = null;
+
 		if (searchDTO.getEnabled() != null && !searchDTO.getEnabled().isEmpty()) {
 			enabled = Integer.parseInt(searchDTO.getEnabled());
 		}
@@ -179,14 +166,14 @@ public class BoardServiceImpl implements BoardService {
 			Long replyCount = (Long) arr[1];
 
 			BoardDTO dto = modelMapper.map(board, BoardDTO.class);
-
-			dto.setReplyCount(replyCount.intValue()); // 댓글수
+			dto.setReplyCount(replyCount.intValue());
 
 			List<String> fileNames = board.getBoardImage().stream().map(img -> img.getFileName()).toList();
 
 			dto.setUploadFileNames(fileNames);
 
 			return dto;
+
 		}).toList();
 
 		return PageResponseDTO.<BoardDTO>withAll().dtoList(dtoList).pageRequestDTO(searchDTO)
@@ -194,7 +181,7 @@ public class BoardServiceImpl implements BoardService {
 	}
 
 	///////////////////
-	/// 관리자 게시글 삭제
+	/// 관리자 삭제
 	///////////////////
 	@Override
 	public void adminRemove(Integer boardNo) {
