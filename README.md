@@ -61,7 +61,7 @@ HTML 태그를 제거한 TEXT 컬럼을 생성하고 해당 컬럼 기준으로 
 
 Controller → Service → Repository → DB
 
-- Controller: 클라이언트 요청 처리
+- Controller: 클라이언트 요청 처리 및 응답 반환
 - Service: 비즈니스 로직 처리
 - Repository: 데이터베이스 접근
 
