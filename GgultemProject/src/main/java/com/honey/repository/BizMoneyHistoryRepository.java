@@ -147,6 +147,14 @@ public interface BizMoneyHistoryRepository extends JpaRepository<BizMoneyHistory
 			"AND bh.type = 'SPEND' ") // ✨ 외부에서 정해준 시간을 기준으로!
 	Long getTotalSpend(@Param("email") String email);
 	
-
+	@Query("SELECT COALESCE(ABS(SUM(bh.amount)), 0) " +
+		   "FROM BizMoneyHistory bh " + 
+			"WHERE bh.type = 'CHARGE'")
+	long sumAllCharge();
+	
+	@Query("SELECT COALESCE(ABS(SUM(bh.amount)), 0) " +
+			   "FROM BizMoneyHistory bh " + 
+				"WHERE bh.type = 'SPEND'")
+	long sumAllSpend();
 
 }

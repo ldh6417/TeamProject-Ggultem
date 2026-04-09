@@ -267,5 +267,11 @@ public interface BusinessBoardRepository extends JpaRepository<BusinessBoard, Lo
 			"WHERE cl.userEmail = :email " + 
 			"AND cl.clickDate >= :startOfToday")
 	Integer getTodayClick(@Param("email") String email,  @Param("startOfToday") java.time.LocalDateTime startOfToday);
+	
+	@Query("SELECT count(*) " + 
+			"FROM BusinessBoard bb " +
+			"WHERE bb.sign = true " +
+			"AND bb.endDate >= :startOfToday")
+	long countActiveAds(@Param("startOfToday") java.time.LocalDateTime startOfToday);
 
 }

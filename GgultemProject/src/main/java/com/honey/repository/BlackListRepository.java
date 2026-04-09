@@ -1,5 +1,6 @@
 package com.honey.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import com.honey.domain.BlackList;
+import com.honey.dto.BlackListDTO;
 
 public interface BlackListRepository extends JpaRepository<BlackList, Long> {
     
@@ -26,4 +28,7 @@ public interface BlackListRepository extends JpaRepository<BlackList, Long> {
     // 기존에 사용하던 활성화 데이터 조회용 쿼리 (필요 시 유지)
     @Query("select c from BlackList c where c.enabled = 1")
     Page<BlackList> findAllByEnabled(Pageable pageable);
+    
+    @Query("SELECT b FROM BlackList b ORDER BY b.regDate DESC")
+	List<BlackList> findRecentBlacklist();
 }

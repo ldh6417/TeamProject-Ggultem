@@ -1,5 +1,7 @@
 package com.honey.repository;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -8,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.honey.domain.Notice;
+import com.honey.dto.NoticeDTO;
 
 public interface NoticeRepository extends JpaRepository<Notice, Long> {
 
@@ -26,4 +29,6 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
            "( (:searchType IS NULL OR :searchType = '') AND (n.title LIKE %:keyword% OR n.content LIKE %:keyword%) )" +
            ")")
     Page<Notice> searchByCondition(@Param("searchType") String searchType, @Param("keyword") String keyword, Pageable pageable);
+
+	List<Notice> findTop5ByOrderByRegDateDesc();
 }
