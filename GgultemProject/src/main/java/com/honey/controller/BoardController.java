@@ -129,7 +129,7 @@ public class BoardController {
 	}
 
 	// 파일업로드
-	@CrossOrigin(origins = "http://localhost:5173")
+	@CrossOrigin(origins = "https://www.ggultem.shop")
 	@PostMapping("/upload")
 	public Map<String, String> upload(@RequestParam("file") MultipartFile file) {
 
@@ -140,6 +140,6 @@ public class BoardController {
 
 	    String fileName = saved.get(0);
 
-	    return Map.of("url", "http://localhost:8080/board/view/" + fileName);
+	    return Map.of("url", "https://api.ggultem.shop/board/view/" + fileName);
 	}
 }
