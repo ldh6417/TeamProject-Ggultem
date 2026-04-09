@@ -69,30 +69,38 @@ public class JWTCheckFilter extends OncePerRequestFilter {
 
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-		// Preflight (지금 보내는 요청이 유효한지를 확인하기 위해 OPTIONS
-		// 메서드로 예비 요청을 보내는 것
-		if (request.getMethod().equals("OPTIONS")) {
-			return true;
-		}
-
-		String path = request.getRequestURI();
-		log.info("check uri. .............. " + path);
-		// api/member/ 경로의 호출은 체크하지 않음
-		if (path.startsWith("/") || path.equals("/") || path.equals("/member/refresh")) {
-			return true;
-		}
-		if (path.contains("/member/kakao")) {
-	        return true; 
-	    }
-		if (path.startsWith("/api/member/login")) {
+	    // 1. OPTIONS 요청(Preflight)은 무조건 패스 (CORS의 핵심!) 📍
+	    if (request.getMethod().equals("OPTIONS")) {
 	        return true;
 	    }
-		// 웹소켓 연결 경로는 토큰 체크에서 제외
-        // (연결 핸드셰이크 시점에 토큰을 검사하기 어렵기 때문)
-        if (path.startsWith("/ws")) {
-            return true;
-        }
-		return false;
+
+	    String path = request.getRequestURI();
+	    log.info("check uri: " + path);
+
+	    // 2. 토큰 체크가 필요 없는 경로들 명시
+	    if (path.startsWith("/member/kakao") || 
+	        path.startsWith("/member/google") || 
+	        path.startsWith("/api/member/login") ||
+	        path.equals("/member/refresh") ||
+	        path.startsWith("/ws")) { // 웹소켓
+	        return true;
+	    }
+
+	    // 3. 이미지 조회 및 업로드 경로 예외 처리 (매우 중요! 🐝)
+	    // BoardController의 /board/upload와 ItemBoard 관련 경로를 모두 열어줍니다.
+	    if (path.startsWith("/board/view/") || 
+	        path.startsWith("/board/upload") ||
+	        path.startsWith("/itemBoard") || 
+	        path.startsWith("/api/itemBoard")) {
+	        return true;
+	    }
+	    
+	    // 4. 메인 페이지 등 기본 경로
+	    if (path.equals("/") || path.isEmpty()) {
+	        return true;
+	    }
+
+	    return false;
 	}
 
 }
