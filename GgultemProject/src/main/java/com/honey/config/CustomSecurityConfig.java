@@ -76,19 +76,30 @@ public class CustomSecurityConfig {
 	public CorsConfigurationSource corsConfigurationSource() {
 	    CorsConfiguration configuration = new CorsConfiguration();
 
-	    // 1. 허용할 도메인 설정 (패턴 대신 리스트로 명시)
-	    configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
-	    
-	    // 2. 허용할 HTTP 메서드
-	    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
-	    
-	    // 3. 허용할 헤더 (Authorization 외에 모든 헤더를 허용하는 것이 속 편합니다)
-	    configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
-	    
-		// 웹소켓 연결 시 필요한 다양한 헤더를 수용하도록 "*"로 설정하거나 더 확장.
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-	    
-	    // 4. 자격 증명 허용
+	    // 허용할 도메인
+	    configuration.setAllowedOrigins(Arrays.asList(
+	        "https://team-project-ggultem-react.vercel.app",
+	        "http://localhost:5173",
+	        "https://ggultem.shop",
+	        "https://www.ggultem.shop"
+	    ));
+
+	    // 허용할 HTTP 메서드
+	    configuration.setAllowedMethods(Arrays.asList(
+	        "GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"
+	    ));
+
+	    // ✅ setAllowedHeaders 한 번만 호출 + credentials=true일 땐 * 사용 금지
+	    configuration.setAllowedHeaders(Arrays.asList(
+	        "Authorization",
+	        "Cache-Control",
+	        "Content-Type",
+	        "Multipart-Form-Data"   // 이미지 업로드용
+	    ));
+
+	    // ✅ 응답 헤더 노출 설정 (Authorization 토큰 등을 프론트에서 읽으려면 필요)
+	    configuration.setExposedHeaders(Arrays.asList("Authorization"));
+
 	    configuration.setAllowCredentials(true);
 
 	    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
